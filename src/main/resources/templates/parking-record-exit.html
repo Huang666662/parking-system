@@ -18,23 +18,16 @@
 <div layout:fragment="content">
     <div class="card">
         <div class="card-title">🚙 车辆出场</div>
+        <div style="margin-bottom:15px;">
+            <a th:href="@{/parking-record/list}" class="btn btn-primary">返回记录列表</a>
+        </div>
 
         <div th:if="${lookupError != null}" class="lookup-error" th:text="${lookupError}"></div>
 
-        <!-- 第一步：输入记录ID查询 -->
-        <form th:action="@{/parking-record/exit/lookup}" method="post">
-            <div class="form-group">
-                <label for="recordId">停车记录ID</label>
-                <input type="number" id="recordId" name="recordId" class="form-control"
-                       placeholder="请输入停车记录ID" th:value="${record != null ? record.id : ''}" required>
-            </div>
-            <button type="submit" class="btn btn-info">查询费用</button>
-            <a th:href="@{/parking-record/list}" class="btn btn-primary">返回</a>
-        </form>
-
-        <!-- 第二步：费用预览与确认支付 -->
-        <div th:if="${record != null}">
+        <!-- 费用预览与确认出场 -->
+        <div th:if="${record != null}" style="margin-bottom:30px;">
             <div class="fee-preview">
+                <h4 style="margin-bottom:12px;">出场费用确认</h4>
                 <div class="fee-row"><span class="label">车牌号</span><span class="value" th:text="${record.plateNumber}"></span></div>
                 <div class="fee-row"><span class="label">入场时间</span><span class="value" th:text="${enterTimeStr}"></span></div>
                 <div class="fee-row"><span class="label">停车时长</span><span class="value" th:text="${durationMinutes} + ' 分钟'"></span></div>
@@ -62,6 +55,34 @@
                 <button type="submit" class="btn btn-warning">确认出场并支付</button>
             </form>
         </div>
+
+        <!-- 当前在场车辆列表 -->
+        <div class="card-title" style="font-size:16px;">📋 当前在场车辆</div>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>记录编号</th>
+                <th>车牌号</th>
+                <th>入场时间</th>
+                <th>已停时长</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${parkingList}">
+                <td th:text="${p.recordNo}"></td>
+                <td th:text="${p.plateNumber}"></td>
+                <td th:text="${p.enterTimeStr}"></td>
+                <td th:text="${p.durationMinutes} + ' 分钟'"></td>
+                <td>
+                    <a th:href="@{/parking-record/exit/{id}(id=${p.id})}" class="btn btn-warning btn-sm">出场</a>
+                </td>
+            </tr>
+            <tr th:if="${parkingList == null or parkingList.empty}">
+                <td colspan="5" style="text-align:center; color:#999;">当前无在场车辆</td>
+            </tr>
+            </tbody>
+        </table>
     </div>
 </div>
 </body>

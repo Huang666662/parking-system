@@ -27,10 +27,18 @@ public class ParkingSpaceController {
     public String list(@RequestParam(defaultValue = "1") Integer page,
                        @RequestParam(defaultValue = "10") Integer size,
                        Model model) {
+        // 先查全局统计（PageHelper 会拦截最近一次查询）
+        List<ParkingSpace> allSpaces = parkingSpaceService.listAll();
+        long totalFree = allSpaces.stream().filter(s -> "free".equals(s.getStatus()) && Integer.valueOf(1).equals(s.getIsEnabled())).count();
+        long totalOccupied = allSpaces.stream().filter(s -> "occupied".equals(s.getStatus())).count();
+
         PageHelper.startPage(page, size);
         List<ParkingSpace> list = parkingSpaceService.listAll();
         PageInfo<ParkingSpace> pageInfo = new PageInfo<>(list);
         model.addAttribute("page", pageInfo);
+        model.addAttribute("totalSpaces", (long) allSpaces.size());
+        model.addAttribute("totalFree", totalFree);
+        model.addAttribute("totalOccupied", totalOccupied);
         return "parking-space-list";
     }
 

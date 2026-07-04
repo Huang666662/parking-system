@@ -37,4 +37,9 @@ public class MonthlyVehicleServiceImpl implements IMonthlyVehicleService {
     public List<MonthlyVehicle> listExpired() {
         return monthlyVehicleMapper.selectExpired();
     }
+
+    @Override
+    public List<MonthlyVehicle> listAll() {
+        return monthlyVehicleMapper.selectAll();
+    }
 }

@@ -21,4 +21,7 @@ public interface MonthlyVehicleMapper {
 
     @Select("SELECT * FROM monthly_vehicle WHERE end_date < NOW() AND status = 'active'")
     List<MonthlyVehicle> selectExpired();
+
+    @Select("SELECT * FROM monthly_vehicle ORDER BY create_time DESC")
+    List<MonthlyVehicle> selectAll();
 }

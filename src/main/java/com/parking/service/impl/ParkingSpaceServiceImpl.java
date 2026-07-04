@@ -15,11 +15,21 @@ public class ParkingSpaceServiceImpl implements IParkingSpaceService {
 
     @Override
     public int addSpace(ParkingSpace space) {
+        if (space.getIsEnabled() == null) {
+            space.setIsEnabled(1);
+        }
+        if (space.getStatus() == null) {
+            space.setStatus("free");
+        }
         return parkingSpaceMapper.insert(space);
     }
 
     @Override
     public int updateSpace(ParkingSpace space) {
+        ParkingSpace existing = parkingSpaceMapper.selectById(space.getId());
+        if (existing != null && space.getIsEnabled() == null) {
+            space.setIsEnabled(existing.getIsEnabled());
+        }
         return parkingSpaceMapper.update(space);
     }
 

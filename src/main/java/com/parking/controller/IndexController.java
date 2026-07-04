@@ -49,20 +49,14 @@ public class IndexController {
         String userType = (String) session.getAttribute("userType");
         if ("admin".equals(userType)) {
             try {
-                model.addAttribute("totalSpaces", parkingSpaceService.listAll().size());
-            } catch (Exception ex) {
-                addDashboardError(dashboardErrorDetails, "parking_space", ex);
-            }
-            try {
-                model.addAttribute("freeSpaces", parkingSpaceService.listFreeSpaces().size());
-            } catch (Exception ex) {
-                addDashboardError(dashboardErrorDetails, "parking_space", ex);
-            }
-            try {
-                long currentParked = parkingSpaceService.listAll().stream()
-                        .filter(s -> "occupied".equals(s.getStatus()))
-                        .count();
-                model.addAttribute("currentParked", (int) currentParked);
+                // 统一数据源：只统计启用的车位
+                List<com.parking.entity.ParkingSpace> allSpaces = parkingSpaceService.listAll();
+                long enabledSpaces = allSpaces.stream().filter(s -> Integer.valueOf(1).equals(s.getIsEnabled())).count();
+                long freeCount = allSpaces.stream().filter(s -> "free".equals(s.getStatus()) && Integer.valueOf(1).equals(s.getIsEnabled())).count();
+                long occupiedCount = allSpaces.stream().filter(s -> "occupied".equals(s.getStatus()) && Integer.valueOf(1).equals(s.getIsEnabled())).count();
+                model.addAttribute("totalSpaces", (int) enabledSpaces);
+                model.addAttribute("freeSpaces", (int) freeCount);
+                model.addAttribute("currentParked", (int) occupiedCount);
             } catch (Exception ex) {
                 addDashboardError(dashboardErrorDetails, "parking_space", ex);
             }

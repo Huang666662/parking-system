@@ -38,6 +38,11 @@
                 <label for="locationDesc">位置描述</label>
                 <input type="text" id="locationDesc" name="locationDesc" class="form-control">
             </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="isEnabled" value="1" checked> 启用此车位
+                </label>
+            </div>
             <button type="submit" class="btn btn-primary">保存</button>
             <a th:href="@{/parking-space/list}" class="btn btn-warning">返回</a>
         </form>

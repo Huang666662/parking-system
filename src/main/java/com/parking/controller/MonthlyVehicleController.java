@@ -37,7 +37,7 @@ public class MonthlyVehicleController {
         if (!hasAccess(session)) {
             return "redirect:/index";
         }
-        List<MonthlyVehicle> list = monthlyVehicleService.listExpired();
+        List<MonthlyVehicle> list = monthlyVehicleService.listAll();
         List<SubscriptionPackage> packages = subscriptionPackageService.listActive();
         model.addAttribute("monthlyVehicles", list);
         model.addAttribute("packages", packages);

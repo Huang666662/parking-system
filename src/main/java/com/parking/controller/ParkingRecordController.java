@@ -118,19 +118,34 @@ public class ParkingRecordController {
     }
 
     @GetMapping("/exit")
-    public String exitPage() {
+    public String exitPage(Model model) {
+        List<ParkingRecord> all = parkingRecordService.listRecords(null);
+        List<Map<String, Object>> parkingList = new ArrayList<>();
+        for (ParkingRecord r : all) {
+            if ("parking".equals(r.getStatus())) {
+                Map<String, Object> m = new HashMap<>();
+                m.put("id", r.getId());
+                m.put("recordNo", r.getRecordNo());
+                m.put("plateNumber", r.getPlateNumber());
+                m.put("enterTimeStr", r.getEnterTime() != null ? r.getEnterTime().format(FMT) : "");
+                long min = Duration.between(r.getEnterTime(), LocalDateTime.now()).toMinutes();
+                m.put("durationMinutes", min);
+                parkingList.add(m);
+            }
+        }
+        model.addAttribute("parkingList", parkingList);
         return "parking-record-exit";
     }
 
-    @PostMapping("/exit/lookup")
-    public String exitLookup(@RequestParam Long recordId, Model model) {
+    @GetMapping("/exit/{recordId}")
+    public String exitLookup(@PathVariable Long recordId, Model model) {
         ParkingRecord record = parkingRecordService.getRecord(recordId);
         if (record == null || !"parking".equals(record.getStatus())) {
             model.addAttribute("lookupError", "记录不存在或已离场");
-            return "parking-record-exit";
+            return exitPage(model);
         }
         addFeePreviewToModel(record, model);
-        return "parking-record-exit";
+        return exitPage(model);
     }
 
     @PostMapping("/exit")

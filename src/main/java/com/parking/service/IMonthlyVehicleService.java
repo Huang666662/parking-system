@@ -9,4 +9,5 @@ public interface IMonthlyVehicleService {
     MonthlyVehicle getVehicle(Long id);
     MonthlyVehicle getByPlate(String plateNumber);
     List<MonthlyVehicle> listExpired();
+    List<MonthlyVehicle> listAll();
 }
