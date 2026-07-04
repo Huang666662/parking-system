@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>商户管理</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">🏪 商户管理</div>
+        <div style="margin-bottom:15px;">
+            <a th:href="@{/merchant/add}" class="btn btn-primary">新增商户</a>
+        </div>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>编号</th>
+                <th>商户名称</th>
+                <th>商户编码</th>
+                <th>联系人</th>
+                <th>联系电话</th>
+                <th>结算比例</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="m : ${page.list}">
+                <td th:text="${m.id}"></td>
+                <td th:text="${m.merchantName}"></td>
+                <td th:text="${m.merchantCode}"></td>
+                <td th:text="${m.contactPerson}"></td>
+                <td th:text="${m.contactPhone}"></td>
+                <td th:text="${m.settlementRate}"></td>
+                <td>
+                            <span class="badge" th:class="${m.status == 1 ? 'badge-success' : 'badge-danger'}"
+                                  th:text="${m.status == 1 ? '正常' : '停用'}"></span>
+                </td>
+                <td>
+                    <a th:href="@{/merchant/delete/{id}(id=${m.id})}" class="btn btn-danger btn-sm" onclick="return confirm('确认删除？')">删除</a>
+                </td>
+            </tr>
+            <tr th:if="${page.list == null or page.list.empty}">
+                <td colspan="8" style="text-align:center; color:#999;">暂无数据</td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="pagination">
+            <a th:href="@{/merchant/list(page=${page.pageNum-1})}" th:class="${page.pageNum <= 1} ? 'disabled' : ''">上一页</a>
+            <span th:each="i : ${#numbers.sequence(1, page.pages)}">
+                    <a th:href="@{/merchant/list(page=${i})}" th:text="${i}" th:class="${i == page.pageNum} ? 'active' : ''"></a>
+                </span>
+            <a th:href="@{/merchant/list(page=${page.pageNum+1})}" th:class="${page.pageNum >= page.pages} ? 'disabled' : ''">下一页</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

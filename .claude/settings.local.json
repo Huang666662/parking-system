@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mysql *)",
+      "Bash(mvn clean *)",
+      "Bash(sed -i 's/adminService.login\\(username, password\\)/adminService.login\\(username, MD5Util.encrypt\\(password\\)\\)/g' \\\\\"D:/IntelliJ IDEA Community Edition 2024.3/work/homework/J2EEhomework/parking_system/src/main/java/com/parking/controller/LoginController.java\\\\\")",
+      "Bash(sed -i 's/userService.login\\(username, password\\)/userService.login\\(username, MD5Util.encrypt\\(password\\)\\)/g' \\\\\"D:/IntelliJ IDEA Community Edition 2024.3/work/homework/J2EEhomework/parking_system/src/main/java/com/parking/controller/LoginController.java\\\\\")",
+      "Bash(sed -i 's/session.setAttribute\\(\"userType\", \"admin\"\\);/session.setAttribute\\(\"userType\", \"admin\"\\);\\\\n                session.setAttribute\\(\"adminRole\", admin.getRole\\(\\)\\);/g' \\\\\"D:/IntelliJ IDEA Community Edition 2024.3/work/homework/J2EEhomework/parking_system/src/main/java/com/parking/controller/LoginController.java\\\\\")",
+      "Bash(sed 's/session.setAttribute\\(\"userType\", \"admin\"\\);/session.setAttribute\\(\"userType\", \"admin\"\\);\\\\n session.setAttribute\\(\"adminRole\", admin.getRole\\(\\)\\);/g')",
+      "Bash(mv /tmp/LoginController.java \"/d/IntelliJ IDEA Community Edition 2024.3/work/homework/J2EEhomework/parking_system/src/main/java/com/parking/controller/LoginController.java\")",
+      "Bash(./mvnw compile *)",
+      "WebSearch",
+      "Bash(java *)",
+      "Bash(export JAVA_HOME=\"/c/Program Files/Java/jdk-21\")",
+      "Bash(export PATH=\"$JAVA_HOME/bin:$PATH\")",
+      "Bash(./mvnw package *)",
+      "Bash(./mvnw clean *)",
+      "Read(//c/Program Files/Java/jdk-21/**)",
+      "Read(//c/Program Files/Java/**)",
+      "Read(//c/Program Files/**)",
+      "Bash(find /c -maxdepth 4 -name \"javac.exe\" -path \"*jdk-21*\")",
+      "Bash(JAVA_HOME=\"/c/Program Files/Java/jdk-21\" \"/c/Program Files/Java/jdk-21/bin/java\" -version)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Java/jdk-21\" ./mvnw clean compile -q)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Java/jdk-21\" ./mvnw clean *)"
+    ]
+  }
+}

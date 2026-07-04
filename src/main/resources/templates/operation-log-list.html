@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>操作日志</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">📋 操作日志</div>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>编号</th>
+                <th>操作人</th>
+                <th>操作类型</th>
+                <th>操作内容</th>
+                <th>IP地址</th>
+                <th>操作时间</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="log : ${logs}">
+                <td th:text="${log.id}"></td>
+                <td th:text="${log.operatorName}"></td>
+                <td th:text="${log.operationType}"></td>
+                <td th:text="${log.operationContent}"></td>
+                <td th:text="${log.ipAddress}"></td>
+                <td th:text="${#temporals.format(log.createTime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

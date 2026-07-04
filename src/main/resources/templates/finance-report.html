@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>财务对账</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">💰 财务对账报表</div>
+        <div style="margin-bottom:15px;">
+            <form th:action="@{/finance/generate-report}" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-primary">生成今日报表</button>
+            </form>
+            <a th:href="@{/finance/record}" class="btn btn-info">查看财务记录</a>
+        </div>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>报表日期</th>
+                <th>总收入</th>
+                <th>现金收入</th>
+                <th>线上收入</th>
+                <th>优惠减免</th>
+                <th>状态</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="r : ${page.list}">
+                <td th:text="${r.reportDate}"></td>
+                <td th:text="${r.totalIncome}"></td>
+                <td th:text="${r.cashIncome}"></td>
+                <td th:text="${r.onlineIncome}"></td>
+                <td th:text="${r.discountAmount}"></td>
+                <td>
+                            <span class="badge" th:class="${r.status == 'confirmed' ? 'badge-success' : 'badge-warning'}"
+                                  th:text="${r.status == 'confirmed' ? '已确认' : '待确认'}"></span>
+                </td>
+            </tr>
+            <tr th:if="${page.list == null or page.list.empty}">
+                <td colspan="6" style="text-align:center; color:#999;">暂无数据</td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="pagination">
+            <a th:href="@{/finance/report(page=${page.pageNum-1})}" th:class="${page.pageNum <= 1} ? 'disabled' : ''">上一页</a>
+            <span th:each="i : ${#numbers.sequence(1, page.pages)}">
+                    <a th:href="@{/finance/report(page=${i})}" th:text="${i}" th:class="${i == page.pageNum} ? 'active' : ''"></a>
+                </span>
+            <a th:href="@{/finance/report(page=${page.pageNum+1})}" th:class="${page.pageNum >= page.pages} ? 'disabled' : ''">下一页</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

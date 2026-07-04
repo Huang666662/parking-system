@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>财务记录</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">📊 财务记录明细</div>
+        <a th:href="@{/finance/report}" class="btn btn-primary" style="margin-bottom:15px;">返回对账报表</a>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>记录ID</th>
+                <th>订单ID</th>
+                <th>金额</th>
+                <th>支付方式</th>
+                <th>记录类型</th>
+                <th>记录时间</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="f : ${page.list}">
+                <td th:text="${f.id}"></td>
+                <td th:text="${f.orderId}"></td>
+                <td th:text="${f.amount}"></td>
+                <td th:text="${f.paymentMethod}"></td>
+                <td th:text="${f.recordType}"></td>
+                <td th:text="${#temporals.format(f.recordTime, 'yyyy-MM-dd HH:mm')}"></td>
+            </tr>
+            <tr th:if="${page.list == null or page.list.empty}">
+                <td colspan="6" style="text-align:center; color:#999;">暂无数据</td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="pagination">
+            <a th:href="@{/finance/record(page=${page.pageNum-1})}" th:class="${page.pageNum <= 1} ? 'disabled' : ''">上一页</a>
+            <span th:each="i : ${#numbers.sequence(1, page.pages)}">
+                    <a th:href="@{/finance/record(page=${i})}" th:text="${i}" th:class="${i == page.pageNum} ? 'active' : ''"></a>
+                </span>
+            <a th:href="@{/finance/record(page=${page.pageNum+1})}" th:class="${page.pageNum >= page.pages} ? 'disabled' : ''">下一页</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

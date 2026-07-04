@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>首页</title>
+    <style>
+        .stat-grid { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
+        .stat-card { flex: 1; min-width: 150px; text-align: center; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .stat-card h3 { font-size: 14px; color: #666; margin-bottom: 8px; }
+        .stat-card p { font-size: 28px; font-weight: 600; }
+
+        .module-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
+        .module-card {
+            background: #fff; border-radius: 8px; padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s, box-shadow 0.2s; cursor: pointer;
+            display: flex; align-items: center; gap: 15px;
+        }
+        .module-card:hover { transform: translateY(-3px); box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+        .module-icon {
+            width: 48px; height: 48px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; flex-shrink: 0;
+        }
+        .module-info h4 { font-size: 15px; margin-bottom: 4px; color: #333; }
+        .module-info p { font-size: 12px; color: #999; }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">🏠 系统首页</div>
+        <p>欢迎使用商场停车场管理系统，当前登录用户：<strong th:text="${session.user != null ? session.user.username : '游客'}"></strong></p>
+        <p th:if="${session.userType == 'admin'}" style="color: red;">身份：管理员（<span th:text="${session.adminRole}"></span>）</p>
+        <p th:if="${session.userType == 'user'}" style="color: #1890ff;">身份：普通用户</p>
+        <hr style="margin: 15px 0; border: none; border-top: 1px solid #f0f0f0;">
+
+        <!-- 管理员统计 -->
+        <div th:if="${session.userType == 'admin'}" class="stat-grid">
+            <div class="stat-card" style="background: #e6f7ff;">
+                <h3>总车位</h3>
+                <p style="color:#1890ff;" th:text="${totalSpaces} ?: '0'">0</p>
+            </div>
+            <div class="stat-card" style="background: #f6ffed;">
+                <h3>空闲车位</h3>
+                <p style="color:#52c41a;" th:text="${freeSpaces} ?: '0'">0</p>
+            </div>
+            <div class="stat-card" style="background: #fffbe6;">
+                <h3>今日收入</h3>
+                <p style="color:#faad14;" th:text="${todayIncome != null} ? '¥'+${todayIncome} : '¥0'">¥0</p>
+            </div>
+            <div class="stat-card" style="background: #f9f0ff;">
+                <h3>当前停放</h3>
+                <p style="color:#722ed1;" th:text="${currentParked} ?: '0'">0</p>
+            </div>
+        </div>
+
+        <!-- 用户统计 -->
+        <div th:if="${session.userType == 'user'}" class="stat-grid">
+            <div class="stat-card" style="background: #e6f7ff;">
+                <h3>我的车辆</h3>
+                <p style="color:#1890ff;" th:text="${vehicleCount} ?: '0'">0</p>
+            </div>
+            <div class="stat-card" style="background: #f6ffed;">
+                <h3>当前预约</h3>
+                <p style="color:#52c41a;" th:text="${reservationCount} ?: '0'">0</p>
+            </div>
+            <div class="stat-card" style="background: #fffbe6;">
+                <h3>待支付订单</h3>
+                <p style="color:#faad14;" th:text="${unpaidOrders} ?: '0'">0</p>
+            </div>
+            <div class="stat-card" style="background: #f9f0ff;">
+                <h3>会员积分</h3>
+                <p style="color:#722ed1;" th:text="${session.user != null ? session.user.points : '0'}">0</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 管理员功能导航 -->
+    <div class="card" th:if="${session.userType == 'admin'}">
+        <div class="card-title">⚙️ 功能导航</div>
+        <div class="module-grid">
+            <!-- 超级管理员 -->
+            <a th:href="@{/admin/list}" class="module-card" th:if="${session.adminRole == 'super_admin'}" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#fff2f0; color:#ff4d4f;">👤</div>
+                <div class="module-info"><h4>系统账号</h4><p>管理员增删改查</p></div>
+            </a>
+            <a th:href="@{/user/list}" class="module-card" th:if="${session.adminRole == 'super_admin' || session.adminRole == 'customer_service'}" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#e6f7ff; color:#1890ff;">👥</div>
+                <div class="module-info"><h4>用户管理</h4><p>审核、冻结、注销用户</p></div>
+            </a>
+            <a th:href="@{/operation-log/list}" class="module-card" th:if="${session.adminRole == 'super_admin'}" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#f9f0ff; color:#722ed1;">📋</div>
+                <div class="module-info"><h4>操作日志</h4><p>查看管理员操作记录</p></div>
+            </a>
+
+            <!-- 系统管理员 -->
+            <a th:href="@{/member-level/list}" class="module-card" th:if="${session.adminRole == 'super_admin' || session.adminRole == 'system_admin'}" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#fffbe6; color:#faad14;">🏅</div>
+                <div class="module-info"><h4>会员等级</h4><p>配置会员权益与折扣</p></div>
+            </a>
+            <a th:href="@{/charge-rule/list}" class="module-card" th:if="${session.adminRole == 'super_admin' || session.adminRole == 'system_admin'}" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#f6ffed; color:#52c41a;">💰</div>
+                <div class="module-info"><h4>计费规则</h4><p>单价、免费时长、封顶</p></div>
+            </a>
+            <a th:href="@{/monthly-vehicle/list}" class="module-card" th:if="${session.adminRole == 'super_admin' || session.adminRole == 'system_admin'}" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#e6f7ff; color:#1890ff;">📅</div>
+                <div class="module-info"><h4>月租管理</h4><p>月租套餐与车辆管理</p></div>
+            </a>
+            <a th:href="@{/merchant/list}" class="module-card" th:if="${session.adminRole == 'super_admin' || session.adminRole == 'system_admin' || session.adminRole == 'finance_admin'}" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#f9f0ff; color:#722ed1;">🏪</div>
+                <div class="module-info"><h4>商户管理</h4><p>商户入驻与结算</p></div>
+            </a>
+            <a th:href="@{/coupon/list}" class="module-card" th:if="${session.adminRole == 'super_admin' || session.adminRole == 'system_admin'}" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#fff2f0; color:#ff4d4f;">🎫</div>
+                <div class="module-info"><h4>优惠券</h4><p>创建与发放优惠券</p></div>
+            </a>
+            <a th:href="@{/system-config/list}" class="module-card" th:if="${session.adminRole == 'super_admin' || session.adminRole == 'system_admin'}" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#f6f6f6; color:#666;">⚙️</div>
+                <div class="module-info"><h4>系统配置</h4><p>全局参数设置</p></div>
+            </a>
+
+            <!-- 车位管理员 -->
+            <a th:href="@{/parking-space/list}" class="module-card" th:if="${session.adminRole == 'super_admin' || session.adminRole == 'space_admin'}" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#e6f7ff; color:#1890ff;">🅿️</div>
+                <div class="module-info"><h4>车位管理</h4><p>车位CRUD与状态</p></div>
+            </a>
+            <a th:href="@{/parking-area/list}" class="module-card" th:if="${session.adminRole == 'super_admin' || session.adminRole == 'space_admin'}" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#f6ffed; color:#52c41a;">📍</div>
+                <div class="module-info"><h4>区域管理</h4><p>停车区域划分</p></div>
+            </a>
+            <a th:href="@{/parking-record/list}" class="module-card" th:if="${session.adminRole == 'super_admin' || session.adminRole == 'space_admin' || session.adminRole == 'cashier'}" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#fffbe6; color:#faad14;">📋</div>
+                <div class="module-info"><h4>停车记录</h4><p>入场/出场记录查询</p></div>
+            </a>
+            <a th:href="@{/reservation/list}" class="module-card" th:if="${session.adminRole == 'super_admin' || session.adminRole == 'space_admin' || session.adminRole == 'customer_service'}" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#f9f0ff; color:#722ed1;">📆</div>
+                <div class="module-info"><h4>预约管理</h4><p>查看与取消预约</p></div>
+            </a>
+            <a th:href="@{/white-list/list}" class="module-card" th:if="${session.adminRole == 'super_admin' || session.adminRole == 'space_admin'}" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#e6f7ff; color:#1890ff;">✅</div>
+                <div class="module-info"><h4>白名单</h4><p>白名单车辆管理</p></div>
+            </a>
+            <a th:href="@{/black-list/list}" class="module-card" th:if="${session.adminRole == 'super_admin' || session.adminRole == 'space_admin'}" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#fff2f0; color:#ff4d4f;">🚫</div>
+                <div class="module-info"><h4>黑名单</h4><p>黑名单车辆管理</p></div>
+            </a>
+            <a th:href="@{/cargo-whitelist/list}" class="module-card" th:if="${session.adminRole == 'super_admin' || session.adminRole == 'space_admin'}" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#f6ffed; color:#52c41a;">🚛</div>
+                <div class="module-info"><h4>货运白名单</h4><p>登记商户货车</p></div>
+            </a>
+            <a th:href="@{/cargo-application/list}" class="module-card" th:if="${session.adminRole == 'super_admin' || session.adminRole == 'space_admin'}" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#fffbe6; color:#faad14;">📦</div>
+                <div class="module-info"><h4>卸货申请</h4><p>审批临时卸货</p></div>
+            </a>
+
+            <!-- 财务管理员 -->
+            <a th:href="@{/order/list}" class="module-card" th:if="${session.adminRole == 'super_admin' || session.adminRole == 'finance_admin' || session.adminRole == 'cashier' || session.adminRole == 'customer_service'}" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#e6f7ff; color:#1890ff;">📑</div>
+                <div class="module-info"><h4>订单管理</h4><p>订单查询与处理</p></div>
+            </a>
+            <a th:href="@{/finance/report}" class="module-card" th:if="${session.adminRole == 'super_admin' || session.adminRole == 'finance_admin'}" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#f6ffed; color:#52c41a;">💵</div>
+                <div class="module-info"><h4>财务管理</h4><p>收费明细与报表</p></div>
+            </a>
+
+            <!-- 收费员快捷入口 -->
+            <a th:href="@{/parking-record/enter}" class="module-card" th:if="${session.adminRole == 'super_admin' || session.adminRole == 'cashier'}" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#f6ffed; color:#52c41a;">🚗</div>
+                <div class="module-info"><h4>车辆入场</h4><p>登记车辆入场</p></div>
+            </a>
+            <a th:href="@{/parking-record/exit}" class="module-card" th:if="${session.adminRole == 'super_admin' || session.adminRole == 'cashier'}" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#fffbe6; color:#faad14;">🚙</div>
+                <div class="module-info"><h4>车辆出场</h4><p>出场缴费处理</p></div>
+            </a>
+
+            <!-- 所有管理员均可查看数据统计 -->
+            <a th:href="@{/statistics/dashboard}" class="module-card" th:if="${session.adminRole == 'super_admin' || session.adminRole == 'system_admin' || session.adminRole == 'space_admin' || session.adminRole == 'finance_admin' || session.adminRole == 'cashier' || session.adminRole == 'customer_service'}" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#f9f0ff; color:#722ed1;">📊</div>
+                <div class="module-info"><h4>数据统计</h4><p>营收与使用率统计</p></div>
+            </a>
+        </div>
+    </div>
+
+    <!-- 用户功能导航 -->
+    <div class="card" th:if="${session.userType == 'user'}">
+        <div class="card-title">🚀 快捷入口</div>
+        <div class="module-grid">
+            <a th:href="@{/vehicle/list}" class="module-card" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#e6f7ff; color:#1890ff;">🚘</div>
+                <div class="module-info"><h4>车辆管理</h4><p>绑定/解绑车牌</p></div>
+            </a>
+            <a th:href="@{/parking-space/list}" class="module-card" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#f6ffed; color:#52c41a;">🅿️</div>
+                <div class="module-info"><h4>车位查询</h4><p>查看空闲车位</p></div>
+            </a>
+            <a th:href="@{/parking-record/enter}" class="module-card" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#fffbe6; color:#faad14;">🚗</div>
+                <div class="module-info"><h4>停车入场</h4><p>手动输入车牌入场</p></div>
+            </a>
+            <a th:href="@{/parking-record/list}" class="module-card" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#f9f0ff; color:#722ed1;">📋</div>
+                <div class="module-info"><h4>我的停车</h4><p>查看停车记录</p></div>
+            </a>
+            <a th:href="@{/reservation/add}" class="module-card" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#e6f7ff; color:#1890ff;">📆</div>
+                <div class="module-info"><h4>预约车位</h4><p>提前预约停车位</p></div>
+            </a>
+            <a th:href="@{/reservation/list}" class="module-card" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#f6ffed; color:#52c41a;">📅</div>
+                <div class="module-info"><h4>我的预约</h4><p>查看预约记录</p></div>
+            </a>
+            <a th:href="@{/order/list}" class="module-card" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#fffbe6; color:#faad14;">📑</div>
+                <div class="module-info"><h4>我的订单</h4><p>查看历史订单</p></div>
+            </a>
+            <a th:href="@{/profile}" class="module-card" style="text-decoration:none; color:inherit;">
+                <div class="module-icon" style="background:#f9f0ff; color:#722ed1;">👤</div>
+                <div class="module-info"><h4>个人信息</h4><p>修改手机号与密码</p></div>
+            </a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

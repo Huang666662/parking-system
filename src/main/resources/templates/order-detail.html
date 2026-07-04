@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>订单详情</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">📄 订单详情</div>
+        <table class="table" style="width:50%;">
+            <tr><th>订单号</th><td th:text="${order.orderNo}"></td></tr>
+            <tr><th>车牌号</th><td th:text="${order.plateNumber}"></td></tr>
+            <tr><th>用户ID</th><td th:text="${order.userId}"></td></tr>
+            <tr><th>总金额</th><td th:text="${order.totalAmount}"></td></tr>
+            <tr><th>已付金额</th><td th:text="${order.paidAmount}"></td></tr>
+            <tr><th>状态</th><td th:text="${order.status}"></td></tr>
+            <tr><th>创建时间</th><td th:text="${#temporals.format(order.createTime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+        </table>
+        <a th:href="@{/order/list}" class="btn btn-primary">返回</a>
+    </div>
+</div>
+</body>
+</html>

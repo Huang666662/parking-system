@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>停车记录</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">📋 停车记录</div>
+        <div style="margin-bottom:15px; display:flex; gap:10px; flex-wrap:wrap;">
+            <a th:href="@{/parking-record/enter}" class="btn btn-success">车辆入场</a>
+            <a th:href="@{/parking-record/exit}" class="btn btn-warning">车辆出场</a>
+            <form th:action="@{/parking-record/list}" method="get" style="display:flex; gap:10px;">
+                <input type="text" name="plateNumber" placeholder="输入车牌号搜索" class="form-control" style="width:200px;" th:value="${plateNumber}">
+                <button type="submit" class="btn btn-primary">搜索</button>
+            </form>
+        </div>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>记录编号</th>
+                <th>车牌号</th>
+                <th>入场时间</th>
+                <th>出场时间</th>
+                <th>停放分钟</th>
+                <th>实付金额</th>
+                <th>状态</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="rec : ${page.list}">
+                <td th:text="${rec.recordNo}"></td>
+                <td th:text="${rec.plateNumber}"></td>
+                <td th:text="${#temporals.format(rec.enterTime, 'yyyy-MM-dd HH:mm')}"></td>
+                <td th:text="${rec.exitTime != null ? #temporals.format(rec.exitTime, 'yyyy-MM-dd HH:mm') : '-'}"></td>
+                <td th:text="${rec.durationMinutes != null ? rec.durationMinutes : '-'}"></td>
+                <td th:text="${rec.actualFee != null ? rec.actualFee : '-'}"></td>
+                <td>
+                            <span class="badge" th:class="${rec.status == 'parking' ? 'badge-warning' : 'badge-success'}"
+                                  th:text="${rec.status == 'parking' ? '停放中' : '已完成'}"></span>
+                </td>
+            </tr>
+            <tr th:if="${page.list == null or page.list.empty}">
+                <td colspan="7" style="text-align:center; color:#999;">暂无记录</td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="pagination">
+            <a th:href="@{/parking-record/list(page=${page.pageNum-1}, plateNumber=${plateNumber})}" th:class="${page.pageNum <= 1} ? 'disabled' : ''">上一页</a>
+            <span th:each="i : ${#numbers.sequence(1, page.pages)}">
+                    <a th:href="@{/parking-record/list(page=${i}, plateNumber=${plateNumber})}" th:text="${i}" th:class="${i == page.pageNum} ? 'active' : ''"></a>
+                </span>
+            <a th:href="@{/parking-record/list(page=${page.pageNum+1}, plateNumber=${plateNumber})}" th:class="${page.pageNum >= page.pages} ? 'disabled' : ''">下一页</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

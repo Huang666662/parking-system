@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>车辆管理</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">🚗 我的车辆</div>
+        <div style="margin-bottom:15px;">
+            <form th:action="@{/vehicle/add}" method="post" style="display:flex; gap:10px;">
+                <input type="text" name="plateNumber" placeholder="输入新车牌号" class="form-control" style="width:200px;" required>
+                <button type="submit" class="btn btn-primary">绑定新车牌</button>
+            </form>
+        </div>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>车牌号</th>
+                <th>默认车辆</th>
+                <th>绑定时间</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="v : ${vehicles}">
+                <td th:text="${v.plateNumber}"></td>
+                <td>
+                    <span th:if="${v.isDefault == 1}" style="color:#52c41a;">是</span>
+                    <span th:if="${v.isDefault != 1}">否</span>
+                </td>
+                <td th:text="${v.bindTime}"></td>
+                <td>
+                    <a th:href="@{/vehicle/set-default/{id}(id=${v.id})}" class="btn btn-success" th:if="${v.isDefault != 1}">设为默认</a>
+                    <a th:href="@{/vehicle/delete/{id}(id=${v.id})}" class="btn btn-danger" onclick="return confirm('确认解绑？')">解绑</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>
