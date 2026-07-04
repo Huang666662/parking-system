@@ -29,6 +29,10 @@
 </head>
 <body>
 <div layout:fragment="content">
+    <div th:if="${dashboardError}" class="card" style="border-left: 4px solid #ff4d4f; background: #fff1f0; color:#a8071a; margin-bottom: 16px; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+        <div><strong>提示：</strong><span th:text="${dashboardError}"></span></div>
+        <button type="button" class="btn btn-primary" style="padding: 8px 14px;" onclick="showDashboardErrorDetails()">查看详情</button>
+    </div>
     <div class="card">
         <div class="card-title">🏠 系统首页</div>
         <p>欢迎使用商场停车场管理系统，当前登录用户：<strong th:text="${session.user != null ? session.user.username : '游客'}"></strong></p>
@@ -48,7 +52,7 @@
             </div>
             <div class="stat-card" style="background: #fffbe6;">
                 <h3>今日收入</h3>
-                <p style="color:#faad14;" th:text="${todayIncome != null} ? '¥'+${todayIncome} : '¥0'">¥0</p>
+                <p style="color:#faad14;" th:text="${todayIncome != null ? '¥' + todayIncome : '¥0'}">¥0</p>
             </div>
             <div class="stat-card" style="background: #f9f0ff;">
                 <h3>当前停放</h3>
@@ -221,6 +225,51 @@
             </a>
         </div>
     </div>
+
+    <div id="dashboardErrorModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:9999; align-items:center; justify-content:center; padding:20px;">
+        <div style="background:#fff; width:min(760px, 100%); border-radius:12px; padding:24px; box-shadow:0 12px 32px rgba(0,0,0,0.2);">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px;">
+                <h3 style="margin:0;">首页数据错误详情</h3>
+                <button type="button" class="btn btn-secondary" onclick="hideDashboardErrorDetails()">关闭</button>
+            </div>
+            <p style="margin-top:0; color:#666;">下面会列出具体是哪个表/模块加载失败，方便你直接定位问题。</p>
+            <div th:if="${#lists.isEmpty(dashboardErrorDetails)}" style="color:#666;">暂无详情。</div>
+            <div th:if="${!#lists.isEmpty(dashboardErrorDetails)}">
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                    <tr style="background:#fafafa; text-align:left;">
+                        <th style="padding:10px; border-bottom:1px solid #eee; width:160px;">表名</th>
+                        <th style="padding:10px; border-bottom:1px solid #eee;">错误信息</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="item : ${dashboardErrorDetails}">
+                        <td style="padding:10px; border-bottom:1px solid #f0f0f0;" th:text="${item.tableName}"></td>
+                        <td style="padding:10px; border-bottom:1px solid #f0f0f0; word-break:break-all;" th:text="${item.message}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showDashboardErrorDetails() {
+            const modal = document.getElementById('dashboardErrorModal');
+            if (modal) modal.style.display = 'flex';
+        }
+        function hideDashboardErrorDetails() {
+            const modal = document.getElementById('dashboardErrorModal');
+            if (modal) modal.style.display = 'none';
+        }
+        document.addEventListener('click', function (e) {
+            const modal = document.getElementById('dashboardErrorModal');
+            if (modal && e.target === modal) hideDashboardErrorDetails();
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') hideDashboardErrorDetails();
+        });
+    </script>
 </div>
 </body>
 </html>

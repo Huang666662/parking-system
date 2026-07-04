@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>出错了</title>
+    <link rel="stylesheet" th:href="@{/static/css/main.css}">
+    <style>
+        .error-page {
+            max-width: 720px;
+            margin: 80px auto;
+            background: #fff;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+        }
+        .error-title { color: #ff4d4f; margin-bottom: 12px; }
+        .error-message { margin: 16px 0; color: #333; line-height: 1.7; }
+        .error-actions a {
+            display: inline-block;
+            margin-right: 12px;
+            padding: 10px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            background: #1890ff;
+            color: #fff;
+        }
+        .error-actions a.secondary { background: #f0f0f0; color: #333; }
+        pre { white-space: pre-wrap; word-break: break-word; background: #fafafa; padding: 16px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+<div class="error-page">
+    <h1 class="error-title">页面加载失败</h1>
+    <p class="error-message">系统遇到了一个异常，但已经被错误页接管，不会再显示 Whitelabel 页面。</p>
+
+    <div th:if="${status}">
+        <strong>HTTP 状态：</strong><span th:text="${status}"></span>
+    </div>
+    <div th:if="${error}">
+        <strong>错误类型：</strong><span th:text="${error}"></span>
+    </div>
+    <div th:if="${message}">
+        <strong>提示信息：</strong><span th:text="${message}"></span>
+    </div>
+    <div th:if="${path}">
+        <strong>访问路径：</strong><span th:text="${path}"></span>
+    </div>
+
+    <div class="error-actions" style="margin-top: 24px;">
+        <a th:href="@{/login}">返回登录页</a>
+        <a class="secondary" th:href="@{/index}">返回首页</a>
+    </div>
+</div>
+</body>
+</html>
+
