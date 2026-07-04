@@ -2,6 +2,7 @@ package com.parking.controller;
 
 import com.parking.entity.ParkingArea;
 import com.parking.service.IParkingAreaService;
+import com.parking.util.OperationLogHelper;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -16,6 +17,9 @@ public class ParkingAreaController {
 
     @Autowired
     private IParkingAreaService parkingAreaService;
+
+    @Autowired
+    private OperationLogHelper operationLogHelper;
 
     private boolean hasAccess(HttpSession session) {
         String role = (String) session.getAttribute("adminRole");
@@ -48,6 +52,7 @@ public class ParkingAreaController {
         area.setTotalSpaces(totalSpaces);
         area.setDescription(description);
         parkingAreaService.addArea(area);
+        operationLogHelper.log(session, "新增停车区域", "新增停车区域：" + areaName);
         return "redirect:/parking-area/list";
     }
 
@@ -57,6 +62,7 @@ public class ParkingAreaController {
             return "redirect:/index";
         }
         parkingAreaService.deleteArea(id);
+        operationLogHelper.log(session, "删除停车区域", "删除停车区域ID：" + id);
         return "redirect:/parking-area/list";
     }
 }

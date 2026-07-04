@@ -3,15 +3,16 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout}">
 <head>
+    <meta charset="UTF-8">
     <title>停车记录</title>
 </head>
 <body>
 <div layout:fragment="content">
     <div class="card">
-        <div class="card-title">📋 停车记录</div>
+        <div class="card-title" th:text="${session.userType == 'admin'} ? '📋 停车记录' : '📋 我的停车'">📋 停车记录</div>
         <div style="margin-bottom:15px; display:flex; gap:10px; flex-wrap:wrap;">
-            <a th:href="@{/parking-record/enter}" class="btn btn-success">车辆入场</a>
-            <a th:href="@{/parking-record/exit}" class="btn btn-warning">车辆出场</a>
+            <a th:if="${session.userType == 'admin'}" th:href="@{/parking-record/enter}" class="btn btn-success">车辆入场</a>
+            <a th:if="${session.userType == 'admin'}" th:href="@{/parking-record/exit}" class="btn btn-warning">车辆出场</a>
             <form th:action="@{/parking-record/list}" method="get" style="display:flex; gap:10px;">
                 <input type="text" name="plateNumber" placeholder="输入车牌号搜索" class="form-control" style="width:200px;" th:value="${plateNumber}">
                 <button type="submit" class="btn btn-primary">搜索</button>
@@ -27,23 +28,29 @@
                 <th>停放分钟</th>
                 <th>实付金额</th>
                 <th>状态</th>
+                <th>操作</th>
             </tr>
             </thead>
             <tbody>
-            <tr th:each="rec : ${page.list}">
+            <tr th:each="rec : ${recordList}">
                 <td th:text="${rec.recordNo}"></td>
                 <td th:text="${rec.plateNumber}"></td>
-                <td th:text="${#temporals.format(rec.enterTime, 'yyyy-MM-dd HH:mm')}"></td>
-                <td th:text="${rec.exitTime != null ? #temporals.format(rec.exitTime, 'yyyy-MM-dd HH:mm') : '-'}"></td>
+                <td th:text="${rec.enterTimeStr}"></td>
+                <td th:text="${rec.exitTimeStr != '' ? rec.exitTimeStr : '-'}"></td>
                 <td th:text="${rec.durationMinutes != null ? rec.durationMinutes : '-'}"></td>
                 <td th:text="${rec.actualFee != null ? rec.actualFee : '-'}"></td>
                 <td>
-                            <span class="badge" th:class="${rec.status == 'parking' ? 'badge-warning' : 'badge-success'}"
-                                  th:text="${rec.status == 'parking' ? '停放中' : '已完成'}"></span>
+                    <span class="badge" th:class="${rec.statusClass}" th:text="${rec.statusLabel}"></span>
+                </td>
+                <td>
+                    <a th:if="${rec.status == 'parking' && session.userType == 'user'}"
+                       th:href="@{/parking-record/user-exit/{id}(id=${rec.id})}"
+                       class="btn btn-warning btn-sm">出场缴费</a>
+                    <span th:if="${rec.status != 'parking' || session.userType == 'admin'}" style="color:#ccc;">-</span>
                 </td>
             </tr>
-            <tr th:if="${page.list == null or page.list.empty}">
-                <td colspan="7" style="text-align:center; color:#999;">暂无记录</td>
+            <tr th:if="${recordList == null or recordList.empty}">
+                <td colspan="8" style="text-align:center; color:#999;">暂无记录</td>
             </tr>
             </tbody>
         </table>

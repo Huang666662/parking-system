@@ -6,6 +6,7 @@ import com.parking.entity.FinancialRecord;
 import com.parking.entity.ReconciliationReport;
 import com.parking.service.IFinancialRecordService;
 import com.parking.service.IReconciliationReportService;
+import com.parking.util.OperationLogHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -26,6 +27,9 @@ public class FinanceController {
 
     @Autowired
     private IReconciliationReportService reconciliationReportService;
+
+    @Autowired
+    private OperationLogHelper operationLogHelper;
 
     private boolean isAdmin(HttpSession session) {
         return "admin".equals(session.getAttribute("userType"));
@@ -74,6 +78,7 @@ public class FinanceController {
         report.setDiscountAmount(BigDecimal.ZERO);
         report.setStatus("pending");
         reconciliationReportService.addReport(report);
+        operationLogHelper.log(session, "生成对账报告", "生成对账报告，日期：" + LocalDate.now());
         return "redirect:/finance/report";
     }
 }

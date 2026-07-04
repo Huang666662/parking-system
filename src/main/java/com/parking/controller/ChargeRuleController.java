@@ -2,6 +2,7 @@ package com.parking.controller;
 
 import com.parking.entity.ChargeRule;
 import com.parking.service.IChargeRuleService;
+import com.parking.util.OperationLogHelper;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -16,6 +17,9 @@ public class ChargeRuleController {
 
     @Autowired
     private IChargeRuleService chargeRuleService;
+
+    @Autowired
+    private OperationLogHelper operationLogHelper;
 
     private boolean hasAccess(HttpSession session) {
         String role = (String) session.getAttribute("adminRole");
@@ -51,6 +55,7 @@ public class ChargeRuleController {
         rule.setCapPrice(capPrice);
         rule.setIsActive(1);
         chargeRuleService.addRule(rule);
+        operationLogHelper.log(session, "新增计费规则", "新增计费规则：" + ruleName);
         return "redirect:/charge-rule/list";
     }
 
@@ -60,6 +65,7 @@ public class ChargeRuleController {
             return "redirect:/index";
         }
         chargeRuleService.deleteRule(id);
+        operationLogHelper.log(session, "删除计费规则", "删除计费规则ID：" + id);
         return "redirect:/charge-rule/list";
     }
 }

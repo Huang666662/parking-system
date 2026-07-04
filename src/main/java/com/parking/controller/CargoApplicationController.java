@@ -2,6 +2,7 @@ package com.parking.controller;
 
 import com.parking.entity.CargoApplication;
 import com.parking.service.ICargoApplicationService;
+import com.parking.util.OperationLogHelper;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -16,6 +17,9 @@ public class CargoApplicationController {
 
     @Autowired
     private ICargoApplicationService cargoApplicationService;
+
+    @Autowired
+    private OperationLogHelper operationLogHelper;
 
     private boolean hasAccess(HttpSession session) {
         String role = (String) session.getAttribute("adminRole");
@@ -39,6 +43,7 @@ public class CargoApplicationController {
             return "redirect:/index";
         }
         cargoApplicationService.approveApplication(id, status);
+        operationLogHelper.log(session, "审批货物申请", "审批货物申请ID：" + id + "，结果：" + status);
         return "redirect:/cargo-application/list";
     }
 }

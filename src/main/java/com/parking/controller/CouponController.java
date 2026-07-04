@@ -2,6 +2,7 @@ package com.parking.controller;
 
 import com.parking.entity.Coupon;
 import com.parking.service.ICouponService;
+import com.parking.util.OperationLogHelper;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -17,6 +18,9 @@ public class CouponController {
 
     @Autowired
     private ICouponService couponService;
+
+    @Autowired
+    private OperationLogHelper operationLogHelper;
 
     private boolean hasAccess(HttpSession session) {
         String role = (String) session.getAttribute("adminRole");
@@ -55,6 +59,7 @@ public class CouponController {
         coupon.setEndTime(LocalDateTime.parse(endTime.replace(" ", "T")));
         coupon.setStatus(1);
         couponService.addCoupon(coupon);
+        operationLogHelper.log(session, "新增优惠券", "新增优惠券：" + couponName);
         return "redirect:/coupon/list";
     }
 
@@ -64,6 +69,7 @@ public class CouponController {
             return "redirect:/index";
         }
         couponService.decrementRemaining(id);
+        operationLogHelper.log(session, "下架优惠券", "下架优惠券ID：" + id);
         return "redirect:/coupon/list";
     }
 }

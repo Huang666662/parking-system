@@ -3,6 +3,7 @@ package com.parking.controller;
 import com.parking.entity.Admin;
 import com.parking.service.IAdminService;
 import com.parking.util.MD5Util;
+import com.parking.util.OperationLogHelper;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -17,6 +18,9 @@ public class AdminController {
 
     @Autowired
     private IAdminService adminService;
+
+    @Autowired
+    private OperationLogHelper operationLogHelper;
 
     private boolean isSuperAdmin(HttpSession session) {
         return "super_admin".equals(session.getAttribute("adminRole"));
@@ -55,6 +59,7 @@ public class AdminController {
         admin.setRole(role);
         admin.setStatus(1);
         adminService.addAdmin(admin);
+        operationLogHelper.log(session, "新增管理员", "新增管理员：" + username + "，角色：" + role);
         return "redirect:/admin/list";
     }
 
@@ -64,6 +69,7 @@ public class AdminController {
             return "redirect:/index";
         }
         adminService.deleteAdmin(id);
+        operationLogHelper.log(session, "删除管理员", "删除管理员ID：" + id);
         return "redirect:/admin/list";
     }
 
@@ -78,6 +84,7 @@ public class AdminController {
         if (admin != null) {
             admin.setPassword(MD5Util.encrypt(newPassword));
             adminService.updateAdmin(admin);
+            operationLogHelper.log(session, "重置管理员密码", "重置管理员密码：" + admin.getUsername());
         }
         return "redirect:/admin/list";
     }

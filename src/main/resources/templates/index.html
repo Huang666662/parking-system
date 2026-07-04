@@ -136,12 +136,12 @@
         <!-- 用户统计 -->
         <div th:if="${session.userType == 'user'}" class="stat-grid">
             <div class="stat-card" style="background: #e6f7ff;">
-                <h3>我的车辆</h3>
-                <p style="color:#1890ff;" th:text="${vehicleCount} ?: '0'">0</p>
+                <h3>空闲车位</h3>
+                <p style="color:#1890ff;" th:text="${freeSpaces} ?: '0'">0</p>
             </div>
             <div class="stat-card" style="background: #f6ffed;">
-                <h3>当前预约</h3>
-                <p style="color:#52c41a;" th:text="${reservationCount} ?: '0'">0</p>
+                <h3>我的车辆</h3>
+                <p style="color:#52c41a;" th:text="${vehicleCount} ?: '0'">0</p>
             </div>
             <div class="stat-card" style="background: #fffbe6;">
                 <h3>待支付订单</h3>
@@ -151,6 +151,18 @@
                 <h3>会员积分</h3>
                 <p style="color:#722ed1;" th:text="${session.user != null ? session.user.points : '0'}">0</p>
             </div>
+        </div>
+
+        <!-- 当前停车提醒 -->
+        <div th:if="${session.userType == 'user' && activeParkingId != null}"
+             style="background: #fff7e6; border: 1px solid #ffd591; border-radius: 8px; padding: 14px 18px; margin-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+            <div>
+                <strong style="color: #d46b08;">🚗 停车进行中</strong>
+                <span style="margin-left: 12px; color: #666;" th:text="${activeParkingPlate}"></span>
+                <span style="margin-left: 12px; color: #999; font-size: 13px;" th:text="'入场时间：' + ${activeParkingEnterTime}"></span>
+            </div>
+            <a th:href="@{/parking-record/user-exit/{id}(id=${activeParkingId})}"
+               class="btn btn-warning" style="white-space: nowrap;">出场缴费</a>
         </div>
     </div>
 

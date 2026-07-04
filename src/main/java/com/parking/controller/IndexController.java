@@ -70,8 +70,22 @@ public class IndexController {
                 BigDecimal todayIncome = BigDecimal.ZERO;
                 for (Object o : ordersService.listOrders(null)) {
                     if (o instanceof com.parking.entity.Orders order) {
-                        if (order.getCreateTime() != null && order.getCreateTime().toLocalDate().equals(LocalDate.now())) {
-                            todayIncome = todayIncome.add(order.getTotalAmount() != null ? order.getTotalAmount() : BigDecimal.ZERO);
+                        if ("paid".equals(order.getStatus())
+                                && order.getCreateTime() != null
+                                && order.getCreateTime().toLocalDate().equals(LocalDate.now())) {
+                            todayIncome = todayIncome.add(order.getPaidAmount() != null ? order.getPaidAmount() : BigDecimal.ZERO);
+                        }
+                    }
+                }
+                // 兜底：也从停车记录汇总已支付的今日费用
+                if (todayIncome.compareTo(BigDecimal.ZERO) == 0) {
+                    for (Object r : parkingRecordService.listRecords(null)) {
+                        if (r instanceof com.parking.entity.ParkingRecord pr) {
+                            if ("paid".equals(pr.getPaymentStatus())
+                                    && pr.getExitTime() != null
+                                    && pr.getExitTime().toLocalDate().equals(LocalDate.now())) {
+                                todayIncome = todayIncome.add(pr.getActualFee() != null ? pr.getActualFee() : BigDecimal.ZERO);
+                            }
                         }
                     }
                 }
@@ -86,6 +100,11 @@ public class IndexController {
                     model.addAttribute("vehicleCount", vehicleService.listByUserId(user.getId()).size());
                 } catch (Exception ex) {
                     addDashboardError(dashboardErrorDetails, "vehicle", ex);
+                }
+                try {
+                    model.addAttribute("freeSpaces", parkingSpaceService.listFreeSpaces().size());
+                } catch (Exception ex) {
+                    addDashboardError(dashboardErrorDetails, "parking_space", ex);
                 }
                 try {
                     int reservationCount = 0;
@@ -113,6 +132,24 @@ public class IndexController {
                     model.addAttribute("unpaidOrders", unpaidOrders);
                 } catch (Exception ex) {
                     addDashboardError(dashboardErrorDetails, "order", ex);
+                }
+                // 查找当前活跃的停车记录
+                try {
+                    for (Object r : parkingRecordService.listRecords(null)) {
+                        if (r instanceof com.parking.entity.ParkingRecord pr
+                                && "parking".equals(pr.getStatus())
+                                && user.getId().equals(pr.getUserId())) {
+                            model.addAttribute("activeParkingId", pr.getId());
+                            model.addAttribute("activeParkingPlate", pr.getPlateNumber());
+                            model.addAttribute("activeParkingEnterTime",
+                                    pr.getEnterTime() != null
+                                            ? pr.getEnterTime().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+                                            : "");
+                            break;
+                        }
+                    }
+                } catch (Exception ex) {
+                    addDashboardError(dashboardErrorDetails, "parking_record", ex);
                 }
             }
         }

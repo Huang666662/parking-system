@@ -2,6 +2,7 @@ package com.parking.controller;
 
 import com.parking.entity.BlackList;
 import com.parking.service.IBlackListService;
+import com.parking.util.OperationLogHelper;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -16,6 +17,9 @@ public class BlackListController {
 
     @Autowired
     private IBlackListService blackListService;
+
+    @Autowired
+    private OperationLogHelper operationLogHelper;
 
     private boolean hasAccess(HttpSession session) {
         String role = (String) session.getAttribute("adminRole");
@@ -48,6 +52,7 @@ public class BlackListController {
             bl.setOperatorId(((com.parking.entity.Admin) adminObj).getId());
         }
         blackListService.addBlackList(bl);
+        operationLogHelper.log(session, "新增黑名单", "新增黑名单车辆：" + plateNumber + "，原因：" + reason);
         return "redirect:/black-list/list";
     }
 
@@ -59,6 +64,7 @@ public class BlackListController {
         BlackList bl = blackListService.getBlackList(id);
         if (bl != null) {
             blackListService.deleteByPlate(bl.getPlateNumber());
+            operationLogHelper.log(session, "移除黑名单", "移除黑名单车辆：" + bl.getPlateNumber());
         }
         return "redirect:/black-list/list";
     }

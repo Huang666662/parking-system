@@ -4,11 +4,13 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.parking.entity.ParkingSpace;
 import com.parking.service.IParkingSpaceService;
+import com.parking.util.OperationLogHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpSession;
 import java.util.List;
 
 @Controller
@@ -17,6 +19,9 @@ public class ParkingSpaceController {
 
     @Autowired
     private IParkingSpaceService parkingSpaceService;
+
+    @Autowired
+    private OperationLogHelper operationLogHelper;
 
     @GetMapping("/list")
     public String list(@RequestParam(defaultValue = "1") Integer page,
@@ -35,8 +40,9 @@ public class ParkingSpaceController {
     }
 
     @PostMapping("/add")
-    public String add(ParkingSpace space) {
+    public String add(ParkingSpace space, HttpSession session) {
         parkingSpaceService.addSpace(space);
+        operationLogHelper.log(session, "新增车位", "新增车位：" + space.getSpaceNumber());
         return "redirect:/parking-space/list";
     }
 
@@ -48,14 +54,16 @@ public class ParkingSpaceController {
     }
 
     @PostMapping("/update")
-    public String update(ParkingSpace space) {
+    public String update(ParkingSpace space, HttpSession session) {
         parkingSpaceService.updateSpace(space);
+        operationLogHelper.log(session, "编辑车位", "编辑车位：" + space.getSpaceNumber());
         return "redirect:/parking-space/list";
     }
 
     @GetMapping("/delete/{id}")
-    public String delete(@PathVariable Long id) {
+    public String delete(@PathVariable Long id, HttpSession session) {
         parkingSpaceService.deleteSpace(id);
+        operationLogHelper.log(session, "删除车位", "删除车位ID：" + id);
         return "redirect:/parking-space/list";
     }
 }

@@ -28,21 +28,19 @@
             </tr>
             </thead>
             <tbody>
-            <tr th:each="o : ${page.list}">
+            <tr th:each="o : ${orderList}">
                 <td th:text="${o.orderNo}"></td>
                 <td th:text="${o.plateNumber}"></td>
                 <td th:text="${o.totalAmount}"></td>
                 <td th:text="${o.paidAmount}"></td>
-                <td>
-                            <span class="badge" th:class="${o.status == 'completed' ? 'badge-success' : (o.status == 'pending' ? 'badge-warning' : 'badge-danger')}"
-                                  th:text="${o.status}"></span>
-                </td>
-                <td th:text="${#temporals.format(o.createTime, 'yyyy-MM-dd HH:mm')}"></td>
+                <td><span class="badge" th:class="${o.statusClass}" th:text="${o.statusLabel}"></span></td>
+                <td th:text="${o.createTimeStr}"></td>
                 <td>
                     <a th:href="@{/order/detail/{id}(id=${o.id})}" class="btn btn-info btn-sm">详情</a>
+                    <a th:if="${o.status == 'unpaid'}" th:href="@{/order/pay/{id}(id=${o.id})}" class="btn btn-success btn-sm">支付</a>
                 </td>
             </tr>
-            <tr th:if="${page.list == null or page.list.empty}">
+            <tr th:if="${orderList == null or orderList.empty}">
                 <td colspan="7" style="text-align:center; color:#999;">暂无数据</td>
             </tr>
             </tbody>

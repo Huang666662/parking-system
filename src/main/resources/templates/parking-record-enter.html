@@ -9,12 +9,13 @@
 <div layout:fragment="content">
     <div class="card">
         <div class="card-title">🚗 车辆入场</div>
+        <div th:if="${enterError != null}" style="padding:12px; background:#fff1f0; border:1px solid #ffccc7; border-radius:6px; color:#a8071a; margin-bottom:12px;" th:text="${enterError}"></div>
         <form th:action="@{/parking-record/enter}" method="post">
             <div class="form-group">
                 <label for="plateNumber">车牌号</label>
                 <input type="text" id="plateNumber" name="plateNumber" class="form-control" placeholder="请输入车牌号" required>
             </div>
-            <div class="form-group">
+            <div class="form-group" th:if="${session.userType == 'admin'}">
                 <label for="userId">用户ID（选填）</label>
                 <input type="number" id="userId" name="userId" class="form-control" placeholder="关联用户ID">
             </div>

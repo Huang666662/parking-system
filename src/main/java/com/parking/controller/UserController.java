@@ -4,6 +4,7 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.parking.entity.User;
 import com.parking.service.IUserService;
+import com.parking.util.OperationLogHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,6 +20,9 @@ public class UserController {
 
     @Autowired
     private IUserService userService;
+
+    @Autowired
+    private OperationLogHelper operationLogHelper;
 
     private boolean isAdmin(HttpSession session) {
         return "admin".equals(session.getAttribute("userType"));
@@ -50,6 +54,7 @@ public class UserController {
         if (user != null) {
             user.setStatus(status);
             userService.updateUser(user);
+            operationLogHelper.log(session, "审核用户", "用户审核：" + user.getUsername() + "，状态：" + (status == 1 ? "通过" : "拒绝"));
         }
         return "redirect:/user/list";
     }
@@ -60,6 +65,7 @@ public class UserController {
             return "redirect:/index";
         }
         userService.deleteUser(id);
+        operationLogHelper.log(session, "删除用户", "删除用户ID：" + id);
         return "redirect:/user/list";
     }
 }

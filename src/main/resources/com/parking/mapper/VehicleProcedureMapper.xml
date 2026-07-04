@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.parking.mapper.VehicleProcedureMapper">
+
+    <!-- (1) 车辆入场 -->
+    <select id="callVehicleEntry" statementType="CALLABLE" parameterType="map">
+        {call sp_vehicle_entry(
+            #{plateNumber, mode=IN, jdbcType=VARCHAR},
+            #{userId, mode=IN, jdbcType=BIGINT},
+            #{spaceNumber, mode=OUT, jdbcType=VARCHAR},
+            #{recordNo, mode=OUT, jdbcType=VARCHAR}
+        )}
+    </select>
+
+    <!-- (2) 计费计算 -->
+    <select id="callCalculateFee" statementType="CALLABLE" parameterType="map">
+        {call sp_calculate_fee(
+            #{recordId, mode=IN, jdbcType=BIGINT},
+            #{originalFee, mode=OUT, jdbcType=DECIMAL},
+            #{discountFee, mode=OUT, jdbcType=DECIMAL},
+            #{actualFee, mode=OUT, jdbcType=DECIMAL}
+        )}
+    </select>
+
+    <!-- (3) 车辆出场结算 -->
+    <select id="callVehicleExit" statementType="CALLABLE" parameterType="map">
+        {call sp_vehicle_exit(
+            #{recordId, mode=IN, jdbcType=BIGINT},
+            #{paymentMethod, mode=IN, jdbcType=VARCHAR},
+            #{orderNo, mode=OUT, jdbcType=VARCHAR},
+            #{paymentNo, mode=OUT, jdbcType=VARCHAR},
+            #{amount, mode=OUT, jdbcType=DECIMAL}
+        )}
+    </select>
+
+</mapper>

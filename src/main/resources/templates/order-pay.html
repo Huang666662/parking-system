@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>订单支付</title>
+    <style>
+        .pay-card { max-width: 500px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+        .pay-amount { font-size: 36px; font-weight: 700; color: #ff4d4f; margin: 20px 0; }
+        .pay-info { text-align: left; margin: 20px 0; padding: 16px; background: #fafafa; border-radius: 8px; }
+        .pay-info p { margin: 6px 0; font-size: 14px; color: #666; }
+        .pay-methods { display: flex; gap: 12px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+        .pay-method { cursor: pointer; padding: 12px 24px; border: 2px solid #e8e8e8; border-radius: 8px; text-align: center; transition: 0.2s; min-width: 90px; }
+        .pay-method:hover { border-color: #1890ff; }
+        .pay-method.selected { border-color: #1890ff; background: #e6f7ff; }
+        .pay-method .icon { font-size: 28px; display: block; margin-bottom: 4px; }
+        .pay-method .label { font-size: 13px; color: #333; }
+        .pay-btn { width: 100%; padding: 12px; font-size: 16px; border-radius: 8px; margin-top: 16px; }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="pay-card">
+        <h3>💳 订单支付</h3>
+        <div class="pay-amount">¥<span th:text="${order.totalAmount}"></span></div>
+        <div class="pay-info">
+            <p>订单号：<span th:text="${order.orderNo}"></span></p>
+            <p>车牌号：<span th:text="${order.plateNumber}"></span></p>
+            <p>创建时间：<span th:text="${createTimeStr}"></span></p>
+        </div>
+
+        <form th:action="@{/order/pay/{id}(id=${order.id})}" method="post">
+            <p style="font-weight:600; margin-bottom: 8px;">选择支付方式</p>
+            <div class="pay-methods">
+                <label class="pay-method selected" id="method-wechat">
+                    <input type="radio" name="paymentMethod" value="wechat" checked style="display:none;">
+                    <span class="icon">💚</span>
+                    <span class="label">微信支付</span>
+                </label>
+                <label class="pay-method" id="method-alipay">
+                    <input type="radio" name="paymentMethod" value="alipay" style="display:none;">
+                    <span class="icon">💙</span>
+                    <span class="label">支付宝</span>
+                </label>
+                <label class="pay-method" id="method-cash">
+                    <input type="radio" name="paymentMethod" value="cash" style="display:none;">
+                    <span class="icon">💵</span>
+                    <span class="label">现金支付</span>
+                </label>
+            </div>
+            <button type="submit" class="btn btn-primary pay-btn">确认支付</button>
+        </form>
+        <a th:href="@{/order/list}" style="display:block; margin-top: 12px; color: #999;">返回订单列表</a>
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('.pay-method').forEach(function(el) {
+        el.addEventListener('click', function() {
+            document.querySelectorAll('.pay-method').forEach(function(e) { e.classList.remove('selected'); });
+            this.classList.add('selected');
+            this.querySelector('input[type=radio]').checked = true;
+        });
+    });
+</script>
+</body>
+</html>

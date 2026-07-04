@@ -4,6 +4,7 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.parking.entity.Merchant;
 import com.parking.service.IMerchantService;
+import com.parking.util.OperationLogHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,6 +20,9 @@ public class MerchantController {
 
     @Autowired
     private IMerchantService merchantService;
+
+    @Autowired
+    private OperationLogHelper operationLogHelper;
 
     private boolean isAdmin(HttpSession session) {
         return "admin".equals(session.getAttribute("userType"));
@@ -53,6 +57,7 @@ public class MerchantController {
             return "redirect:/index";
         }
         merchantService.addMerchant(merchant);
+        operationLogHelper.log(session, "新增商户", "新增商户：" + merchant.getMerchantName());
         return "redirect:/merchant/list";
     }
 
@@ -62,6 +67,7 @@ public class MerchantController {
             return "redirect:/index";
         }
         merchantService.deleteMerchant(id);
+        operationLogHelper.log(session, "删除商户", "删除商户ID：" + id);
         return "redirect:/merchant/list";
     }
 }

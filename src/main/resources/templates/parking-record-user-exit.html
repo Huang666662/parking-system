@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>出场缴费</title>
+    <style>
+        .exit-card { max-width: 500px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .exit-amount { font-size: 36px; font-weight: 700; color: #ff4d4f; text-align: center; margin: 20px 0; }
+        .exit-info { margin: 20px 0; padding: 16px; background: #fafafa; border-radius: 8px; }
+        .exit-info p { margin: 6px 0; font-size: 14px; color: #666; }
+        .fee-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
+        .fee-row .label { color: #666; }
+        .fee-row .value { font-weight: 600; }
+        .discount-row { color: #52c41a; }
+        .pay-methods { display: flex; gap: 12px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+        .pay-method { cursor: pointer; padding: 12px 24px; border: 2px solid #e8e8e8; border-radius: 8px; text-align: center; transition: 0.2s; min-width: 90px; }
+        .pay-method:hover { border-color: #1890ff; }
+        .pay-method.selected { border-color: #1890ff; background: #e6f7ff; }
+        .pay-method .icon { font-size: 28px; display: block; margin-bottom: 4px; }
+        .pay-method .label { font-size: 13px; color: #333; }
+        .pay-btn { width: 100%; padding: 12px; font-size: 16px; border-radius: 8px; margin-top: 16px; }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="exit-card">
+        <h3 style="text-align:center;">🚙 出场缴费</h3>
+
+        <div class="exit-info">
+            <p>车牌号：<strong th:text="${record.plateNumber}"></strong></p>
+            <p>入场时间：<span th:text="${enterTimeStr}"></span></p>
+            <p>停车时长：<span th:text="${durationMinutes}"></span> 分钟</p>
+        </div>
+
+        <div class="exit-info">
+            <div class="fee-row">
+                <span class="label">原始费用</span>
+                <span class="value">¥<span th:text="${originalFee}"></span></span>
+            </div>
+            <div class="fee-row discount-row" th:if="${discountFee > 0}">
+                <span class="label">会员折扣 <span th:if="${memberLevelName != null}" th:text="'(' + ${memberLevelName} + ')'"></span></span>
+                <span class="value">-¥<span th:text="${discountFee}"></span></span>
+            </div>
+            <hr style="margin: 8px 0; border: none; border-top: 1px solid #e8e8e8;">
+            <div class="fee-row" style="font-size:18px; font-weight:700; color:#ff4d4f;">
+                <span>实付金额</span>
+                <span>¥<span th:text="${actualFee}"></span></span>
+            </div>
+        </div>
+
+        <form th:action="@{/parking-record/user-exit/{id}(id=${record.id})}" method="post">
+            <p style="font-weight:600; margin-bottom: 8px; text-align:center;">选择支付方式</p>
+            <div class="pay-methods">
+                <label class="pay-method selected">
+                    <input type="radio" name="paymentMethod" value="wechat" checked style="display:none;">
+                    <span class="icon">💚</span>
+                    <span class="label">微信支付</span>
+                </label>
+                <label class="pay-method">
+                    <input type="radio" name="paymentMethod" value="alipay" style="display:none;">
+                    <span class="icon">💙</span>
+                    <span class="label">支付宝</span>
+                </label>
+                <label class="pay-method">
+                    <input type="radio" name="paymentMethod" value="cash" style="display:none;">
+                    <span class="icon">💵</span>
+                    <span class="label">现金支付</span>
+                </label>
+            </div>
+            <button type="submit" class="btn btn-warning pay-btn">确认支付并出场</button>
+        </form>
+        <a th:href="@{/parking-record/list}" style="display:block; margin-top: 12px; text-align:center; color: #999;">返回停车记录</a>
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('.pay-method').forEach(function(el) {
+        el.addEventListener('click', function() {
+            document.querySelectorAll('.pay-method').forEach(function(e) { e.classList.remove('selected'); });
+            this.classList.add('selected');
+            this.querySelector('input[type=radio]').checked = true;
+        });
+    });
+</script>
+</body>
+</html>

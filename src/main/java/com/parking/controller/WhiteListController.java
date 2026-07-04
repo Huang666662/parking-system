@@ -2,6 +2,7 @@ package com.parking.controller;
 
 import com.parking.entity.WhiteList;
 import com.parking.service.IWhiteListService;
+import com.parking.util.OperationLogHelper;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -16,6 +17,9 @@ public class WhiteListController {
 
     @Autowired
     private IWhiteListService whiteListService;
+
+    @Autowired
+    private OperationLogHelper operationLogHelper;
 
     private boolean hasAccess(HttpSession session) {
         String role = (String) session.getAttribute("adminRole");
@@ -45,6 +49,7 @@ public class WhiteListController {
         wl.setExpireDate(expireDate);
         wl.setStatus("active");
         whiteListService.addWhiteList(wl);
+        operationLogHelper.log(session, "新增白名单", "新增白名单车辆：" + plateNumber);
         return "redirect:/white-list/list";
     }
 
@@ -56,6 +61,7 @@ public class WhiteListController {
         WhiteList wl = whiteListService.getWhiteList(id);
         if (wl != null) {
             whiteListService.updateStatusByPlate(wl.getPlateNumber(), "inactive");
+            operationLogHelper.log(session, "移除白名单", "移除白名单车辆：" + wl.getPlateNumber());
         }
         return "redirect:/white-list/list";
     }

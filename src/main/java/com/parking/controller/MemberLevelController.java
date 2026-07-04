@@ -2,6 +2,7 @@ package com.parking.controller;
 
 import com.parking.entity.MemberLevel;
 import com.parking.service.IMemberLevelService;
+import com.parking.util.OperationLogHelper;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -16,6 +17,9 @@ public class MemberLevelController {
 
     @Autowired
     private IMemberLevelService memberLevelService;
+
+    @Autowired
+    private OperationLogHelper operationLogHelper;
 
     private boolean hasAccess(HttpSession session) {
         String role = (String) session.getAttribute("adminRole");
@@ -50,6 +54,7 @@ public class MemberLevelController {
         level.setDiscountRate(discountRate);
         level.setMonthlyFreeMinutes(monthlyFreeMinutes);
         memberLevelService.addLevel(level);
+        operationLogHelper.log(session, "新增会员等级", "新增会员等级：" + levelName);
         return "redirect:/member-level/list";
     }
 
@@ -59,6 +64,7 @@ public class MemberLevelController {
             return "redirect:/index";
         }
         memberLevelService.deleteLevel(id);
+        operationLogHelper.log(session, "删除会员等级", "删除会员等级ID：" + id);
         return "redirect:/member-level/list";
     }
 }

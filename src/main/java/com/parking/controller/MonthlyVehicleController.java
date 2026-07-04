@@ -4,6 +4,7 @@ import com.parking.entity.MonthlyVehicle;
 import com.parking.entity.SubscriptionPackage;
 import com.parking.service.IMonthlyVehicleService;
 import com.parking.service.ISubscriptionPackageService;
+import com.parking.util.OperationLogHelper;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -22,6 +23,9 @@ public class MonthlyVehicleController {
 
     @Autowired
     private ISubscriptionPackageService subscriptionPackageService;
+
+    @Autowired
+    private OperationLogHelper operationLogHelper;
 
     private boolean hasAccess(HttpSession session) {
         String role = (String) session.getAttribute("adminRole");
@@ -60,6 +64,7 @@ public class MonthlyVehicleController {
         }
         mv.setStatus("active");
         monthlyVehicleService.addVehicle(mv);
+        operationLogHelper.log(session, "新增月租车辆", "新增月租车辆：" + plateNumber);
         return "redirect:/monthly-vehicle/list";
     }
 
@@ -69,6 +74,7 @@ public class MonthlyVehicleController {
             return "redirect:/index";
         }
         monthlyVehicleService.updateStatus(id, "expired");
+        operationLogHelper.log(session, "注销月租车辆", "注销月租车辆ID：" + id);
         return "redirect:/monthly-vehicle/list";
     }
 }

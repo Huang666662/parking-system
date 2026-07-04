@@ -2,6 +2,7 @@ package com.parking.controller;
 
 import com.parking.entity.CargoWhitelist;
 import com.parking.service.ICargoWhitelistService;
+import com.parking.util.OperationLogHelper;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -16,6 +17,9 @@ public class CargoWhitelistController {
 
     @Autowired
     private ICargoWhitelistService cargoWhitelistService;
+
+    @Autowired
+    private OperationLogHelper operationLogHelper;
 
     private boolean hasAccess(HttpSession session) {
         String role = (String) session.getAttribute("adminRole");
@@ -57,6 +61,7 @@ public class CargoWhitelistController {
         w.setEffectiveEndDate(java.time.LocalDate.parse(effectiveEndDate));
         w.setStatus("active");
         cargoWhitelistService.addWhitelist(w);
+        operationLogHelper.log(session, "新增货运白名单", "新增货运白名单车辆：" + plateNumber);
         return "redirect:/cargo-whitelist/list";
     }
 
@@ -66,6 +71,7 @@ public class CargoWhitelistController {
             return "redirect:/index";
         }
         cargoWhitelistService.updateStatus(id, status);
+        operationLogHelper.log(session, "更新货运白名单", "更新货运白名单ID：" + id + "，状态：" + status);
         return "redirect:/cargo-whitelist/list";
     }
 }

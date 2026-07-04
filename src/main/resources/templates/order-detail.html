@@ -16,9 +16,12 @@
             <tr><th>总金额</th><td th:text="${order.totalAmount}"></td></tr>
             <tr><th>已付金额</th><td th:text="${order.paidAmount}"></td></tr>
             <tr><th>状态</th><td th:text="${order.status}"></td></tr>
-            <tr><th>创建时间</th><td th:text="${#temporals.format(order.createTime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+            <tr><th>创建时间</th><td th:text="${createTimeStr}"></td></tr>
         </table>
-        <a th:href="@{/order/list}" class="btn btn-primary">返回</a>
+        <div style="display:flex; gap:10px; margin-top:15px;">
+            <a th:href="@{/order/list}" class="btn btn-secondary">返回</a>
+            <a th:if="${order.status == 'unpaid'}" th:href="@{/order/pay/{id}(id=${order.id})}" class="btn btn-success">去支付</a>
+        </div>
     </div>
 </div>
 </body>
