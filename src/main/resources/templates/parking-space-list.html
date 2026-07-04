@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title th:text="${session.userType == 'admin'} ? '车位管理' : '车位查询'">车位管理</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title" th:text="${session.userType == 'admin'} ? '🅿️ 车位管理' : '🅿️ 车位查询'">🅿️ 车位管理</div>
+        <div style="margin-bottom: 15px;" th:if="${session.userType == 'admin'}">
+            <a th:href="@{/parking-space/add}" class="btn btn-primary">新增车位</a>
+        </div>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>编号</th>
+                <th>车位编号</th>
+                <th>名称</th>
+                <th>区域</th>
+                <th>类型</th>
+                <th>状态</th>
+                <th th:if="${session.userType == 'admin'}">操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="space : ${page.list}">
+                <td th:text="${space.id}"></td>
+                <td th:text="${space.spaceNumber}"></td>
+                <td th:text="${space.spaceName}"></td>
+                <td th:text="${space.areaId}"></td>
+                <td th:text="${space.spaceTypeId}"></td>
+                <td>
+                            <span class="badge" th:class="${space.status == 'free' ? 'badge-success' : (space.status == 'occupied' ? 'badge-danger' : 'badge-warning')}"
+                                  th:text="${space.status}"></span>
+                </td>
+                <td th:if="${session.userType == 'admin'}">
+                    <a th:href="@{/parking-space/edit/{id}(id=${space.id})}" class="btn btn-warning btn-sm">编辑</a>
+                    <a th:href="@{/parking-space/delete/{id}(id=${space.id})}" class="btn btn-danger btn-sm" onclick="return confirm('确认删除？')">删除</a>
+                </td>
+            </tr>
+            <tr th:if="${page.list == null or page.list.empty}">
+                <td colspan="7" style="text-align:center; color:#999;">暂无数据</td>
+            </tr>
+            </tbody>
+        </table>
+        <!-- 分页 -->
+        <div class="pagination">
+            <a th:href="@{/parking-space/list(page=${page.pageNum-1})}" th:class="${page.pageNum <= 1} ? 'disabled' : ''">上一页</a>
+            <span th:each="i : ${#numbers.sequence(1, page.pages)}">
+                    <a th:href="@{/parking-space/list(page=${i})}" th:text="${i}" th:class="${i == page.pageNum} ? 'active' : ''"></a>
+                </span>
+            <a th:href="@{/parking-space/list(page=${page.pageNum+1})}" th:class="${page.pageNum >= page.pages} ? 'disabled' : ''">下一页</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

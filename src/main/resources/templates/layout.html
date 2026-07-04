@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${title} ?: '停车场管理系统'">停车场管理系统</title>
+  <link rel="stylesheet" th:href="@{/static/css/main.css}">
+  <style>
+    /* ========== 导航栏全局修复 ========== */
+    .navbar {
+      background: linear-gradient(135deg, #001529 0%, #002140 100%);
+      padding: 8px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 56px;
+      height: auto;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      gap: 6px 10px;
+    }
+
+    .navbar .brand {
+      font-size: 18px;
+      font-weight: bold;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      gap: 8px;
+    }
+    .navbar .brand .icon {
+      font-size: 24px;
+    }
+
+    /* 菜单容器 - 核心修复：允许换行 */
+    .navbar .menu-wrap {
+      display: flex;
+      flex: 1 1 auto;
+      justify-content: center;
+      min-width: 0;
+    }
+
+    .navbar .menu {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      gap: 2px;
+    }
+
+    .navbar .menu li {
+      margin: 0;
+      list-style: none;
+    }
+
+    .navbar .menu li a {
+      color: rgba(255,255,255,0.85);
+      padding: 6px 12px;
+      display: block;
+      font-size: 13px;
+      border-radius: 4px;
+      transition: 0.3s;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+
+    .navbar .menu li a:hover,
+    .navbar .menu li a.active {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+    }
+
+    /* 用户信息区域 - 固定不压缩 */
+    .navbar .user-info {
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+      font-size: 13px;
+    }
+
+    .navbar .user-info .admin-tag {
+      color: #ff7875;
+      font-size: 12px;
+      border: 1px solid #ff7875;
+      padding: 1px 8px;
+      border-radius: 10px;
+    }
+
+    .navbar .user-info .logout-btn {
+      background: #ff4d4f;
+      border: none;
+      color: #fff;
+      padding: 5px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: 0.3s;
+      text-decoration: none;
+    }
+    .navbar .user-info .logout-btn:hover {
+      background: #ff7875;
+    }
+
+    /* ========== 响应式适配 ========== */
+    @media (max-width: 992px) {
+      .navbar .menu li a {
+        padding: 5px 10px;
+        font-size: 12px;
+      }
+      .navbar .brand {
+        font-size: 16px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .navbar {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 8px 12px;
+        gap: 8px;
+      }
+      .navbar .brand {
+        justify-content: center;
+      }
+      .navbar .menu-wrap {
+        order: 2;
+      }
+      .navbar .menu {
+        justify-content: flex-start;
+        gap: 2px;
+      }
+      .navbar .menu li a {
+        padding: 4px 8px;
+        font-size: 12px;
+      }
+      .navbar .user-info {
+        justify-content: flex-end;
+        order: 1;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .navbar .menu li a {
+        padding: 3px 6px;
+        font-size: 11px;
+      }
+      .navbar .brand {
+        font-size: 14px;
+      }
+      .navbar .brand .icon {
+        font-size: 20px;
+      }
+      .navbar .user-info {
+        font-size: 12px;
+      }
+      .navbar .user-info .logout-btn {
+        padding: 4px 10px;
+        font-size: 12px;
+      }
+    }
+
+    /* ========== 页面其他样式 ========== */
+    .container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ====== 导航栏 ====== -->
+<nav class="navbar">
+
+  <!-- 品牌 Logo -->
+  <div class="brand">
+    <span class="icon">🅿️</span>
+    商场停车场管理系统
+  </div>
+
+  <!-- ===== 管理员菜单 ===== -->
+  <div class="menu-wrap" th:if="${session.userType == 'admin'}">
+    <ul class="menu">
+      <li><a th:href="@{/index}" th:class="${current == 'index'} ? 'active' : ''">首页</a></li>
+      <li th:if="${session.adminRole == 'super_admin'}"><a th:href="@{/admin/list}" th:class="${current == 'admin'} ? 'active' : ''">系统账号</a></li>
+      <li th:if="${session.adminRole == 'super_admin' || session.adminRole == 'customer_service'}"><a th:href="@{/user/list}" th:class="${current == 'user'} ? 'active' : ''">用户管理</a></li>
+      <li th:if="${session.adminRole == 'super_admin' || session.adminRole == 'system_admin'}"><a th:href="@{/member-level/list}" th:class="${current == 'member'} ? 'active' : ''">会员等级</a></li>
+      <li th:if="${session.adminRole == 'super_admin' || session.adminRole == 'system_admin'}"><a th:href="@{/charge-rule/list}" th:class="${current == 'charge'} ? 'active' : ''">计费规则</a></li>
+      <li th:if="${session.adminRole == 'super_admin' || session.adminRole == 'space_admin'}"><a th:href="@{/parking-space/list}" th:class="${current == 'space'} ? 'active' : ''">车位管理</a></li>
+      <li th:if="${session.adminRole == 'super_admin' || session.adminRole == 'space_admin'}"><a th:href="@{/parking-area/list}" th:class="${current == 'area'} ? 'active' : ''">区域管理</a></li>
+      <li th:if="${session.adminRole == 'super_admin' || session.adminRole == 'space_admin' || session.adminRole == 'cashier'}"><a th:href="@{/parking-record/list}" th:class="${current == 'record'} ? 'active' : ''">停车记录</a></li>
+      <li th:if="${session.adminRole == 'super_admin' || session.adminRole == 'space_admin' || session.adminRole == 'customer_service'}"><a th:href="@{/reservation/list}" th:class="${current == 'reservation'} ? 'active' : ''">预约管理</a></li>
+      <li th:if="${session.adminRole == 'super_admin' || session.adminRole == 'finance_admin' || session.adminRole == 'cashier' || session.adminRole == 'customer_service'}"><a th:href="@{/order/list}" th:class="${current == 'order'} ? 'active' : ''">订单管理</a></li>
+      <li th:if="${session.adminRole == 'super_admin' || session.adminRole == 'finance_admin'}"><a th:href="@{/finance/report}" th:class="${current == 'finance'} ? 'active' : ''">财务管理</a></li>
+      <li th:if="${session.adminRole == 'super_admin' || session.adminRole == 'system_admin'}"><a th:href="@{/monthly-vehicle/list}" th:class="${current == 'monthly'} ? 'active' : ''">月租管理</a></li>
+      <li th:if="${session.adminRole == 'super_admin' || session.adminRole == 'space_admin'}"><a th:href="@{/white-list/list}" th:class="${current == 'white'} ? 'active' : ''">白名单</a></li>
+      <li th:if="${session.adminRole == 'super_admin' || session.adminRole == 'space_admin'}"><a th:href="@{/black-list/list}" th:class="${current == 'black'} ? 'active' : ''">黑名单</a></li>
+      <li th:if="${session.adminRole == 'super_admin' || session.adminRole == 'space_admin'}"><a th:href="@{/cargo-whitelist/list}" th:class="${current == 'cargo'} ? 'active' : ''">货运白名单</a></li>
+      <li th:if="${session.adminRole == 'super_admin' || session.adminRole == 'space_admin'}"><a th:href="@{/cargo-application/list}" th:class="${current == 'cargo-app'} ? 'active' : ''">卸货申请</a></li>
+      <li th:if="${session.adminRole == 'super_admin' || session.adminRole == 'system_admin' || session.adminRole == 'finance_admin'}"><a th:href="@{/merchant/list}" th:class="${current == 'merchant'} ? 'active' : ''">商户管理</a></li>
+      <li th:if="${session.adminRole == 'super_admin' || session.adminRole == 'system_admin'}"><a th:href="@{/coupon/list}" th:class="${current == 'coupon'} ? 'active' : ''">优惠券</a></li>
+      <li th:if="${session.adminRole == 'super_admin'}"><a th:href="@{/operation-log/list}" th:class="${current == 'log'} ? 'active' : ''">操作日志</a></li>
+      <li th:if="${session.adminRole == 'super_admin' || session.adminRole == 'system_admin' || session.adminRole == 'space_admin' || session.adminRole == 'finance_admin' || session.adminRole == 'cashier' || session.adminRole == 'customer_service'}"><a th:href="@{/statistics/dashboard}" th:class="${current == 'stat'} ? 'active' : ''">数据统计</a></li>
+    </ul>
+  </div>
+
+  <!-- ===== 普通用户菜单 ===== -->
+  <div class="menu-wrap" th:if="${session.userType == 'user'}">
+    <ul class="menu">
+      <li><a th:href="@{/index}" th:class="${current == 'index'} ? 'active' : ''">首页</a></li>
+      <li><a th:href="@{/vehicle/list}" th:class="${current == 'vehicle'} ? 'active' : ''">车辆管理</a></li>
+      <li><a th:href="@{/parking-space/list}" th:class="${current == 'space'} ? 'active' : ''">车位查询</a></li>
+      <li><a th:href="@{/parking-record/list}" th:class="${current == 'record'} ? 'active' : ''">我的停车</a></li>
+      <li><a th:href="@{/reservation/add}" th:class="${current == 'reservation-add'} ? 'active' : ''">预约车位</a></li>
+      <li><a th:href="@{/reservation/list}" th:class="${current == 'reservation'} ? 'active' : ''">我的预约</a></li>
+      <li><a th:href="@{/order/list}" th:class="${current == 'order'} ? 'active' : ''">我的订单</a></li>
+      <li><a th:href="@{/member}" th:class="${current == 'member'} ? 'active' : ''">会员中心</a></li>
+      <li><a th:href="@{/profile}" th:class="${current == 'profile'} ? 'active' : ''">个人信息</a></li>
+    </ul>
+  </div>
+
+  <!-- 用户信息 -->
+  <div class="user-info">
+    <span class="username" th:text="${session.user != null ? session.user.username : '游客'}"></span>
+    <span th:if="${session.userType == 'admin'}" class="admin-tag">管理员</span>
+    <a th:href="@{/logout}" class="logout-btn">退出</a>
+  </div>
+
+</nav>
+
+<!-- ====== 内容区域 ====== -->
+<div class="container">
+  <div layout:fragment="content"></div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>订单管理</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">📦 订单管理</div>
+        <div style="margin-bottom:15px;">
+            <form th:action="@{/order/list}" method="get" style="display:flex; gap:10px;">
+                <input type="text" name="plateNumber" placeholder="输入车牌号搜索" class="form-control" style="width:200px;" th:value="${plateNumber}">
+                <button type="submit" class="btn btn-primary">搜索</button>
+            </form>
+        </div>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>订单号</th>
+                <th>车牌号</th>
+                <th>总金额</th>
+                <th>已付金额</th>
+                <th>状态</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="o : ${page.list}">
+                <td th:text="${o.orderNo}"></td>
+                <td th:text="${o.plateNumber}"></td>
+                <td th:text="${o.totalAmount}"></td>
+                <td th:text="${o.paidAmount}"></td>
+                <td>
+                            <span class="badge" th:class="${o.status == 'completed' ? 'badge-success' : (o.status == 'pending' ? 'badge-warning' : 'badge-danger')}"
+                                  th:text="${o.status}"></span>
+                </td>
+                <td th:text="${#temporals.format(o.createTime, 'yyyy-MM-dd HH:mm')}"></td>
+                <td>
+                    <a th:href="@{/order/detail/{id}(id=${o.id})}" class="btn btn-info btn-sm">详情</a>
+                </td>
+            </tr>
+            <tr th:if="${page.list == null or page.list.empty}">
+                <td colspan="7" style="text-align:center; color:#999;">暂无数据</td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="pagination">
+            <a th:href="@{/order/list(page=${page.pageNum-1}, plateNumber=${plateNumber})}" th:class="${page.pageNum <= 1} ? 'disabled' : ''">上一页</a>
+            <span th:each="i : ${#numbers.sequence(1, page.pages)}">
+                    <a th:href="@{/order/list(page=${i}, plateNumber=${plateNumber})}" th:text="${i}" th:class="${i == page.pageNum} ? 'active' : ''"></a>
+                </span>
+            <a th:href="@{/order/list(page=${page.pageNum+1}, plateNumber=${plateNumber})}" th:class="${page.pageNum >= page.pages} ? 'disabled' : ''">下一页</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

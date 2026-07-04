@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>黑名单管理</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">⛔ 黑名单管理</div>
+        <form th:action="@{/black-list/add}" method="post" style="margin-bottom:15px; display:flex; gap:10px; flex-wrap:wrap;">
+            <input type="text" name="plateNumber" placeholder="车牌号" class="form-control" style="width:150px;" required>
+            <input type="text" name="reason" placeholder="原因" class="form-control" style="width:200px;" required>
+            <button type="submit" class="btn btn-primary">新增黑名单</button>
+        </form>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>编号</th>
+                <th>车牌号</th>
+                <th>原因</th>
+                <th>操作时间</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="b : ${blackList}">
+                <td th:text="${b.id}"></td>
+                <td th:text="${b.plateNumber}"></td>
+                <td th:text="${b.reason}"></td>
+                <td th:text="${#temporals.format(b.createTime, 'yyyy-MM-dd HH:mm')}"></td>
+                <td>
+                    <a th:href="@{/black-list/delete/{id}(id=${b.id})}" class="btn btn-danger" onclick="return confirm('确认移除？')">移除</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

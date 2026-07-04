@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>预约管理</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">📅 预约管理</div>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>预约编号</th>
+                <th>用户ID</th>
+                <th>车牌号</th>
+                <th>车位ID</th>
+                <th>预约时间</th>
+                <th>状态</th>
+                <th>保证金</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="r : ${page.list}">
+                <td th:text="${r.reservationNo}"></td>
+                <td th:text="${r.userId}"></td>
+                <td th:text="${r.plateNumber}"></td>
+                <td th:text="${r.spaceId}"></td>
+                <td th:text="${#temporals.format(r.reserveTime, 'yyyy-MM-dd HH:mm')}"></td>
+                <td>
+                            <span class="badge" th:class="${r.status == 'pending' ? 'badge-warning' : (r.status == 'confirmed' ? 'badge-success' : 'badge-danger')}"
+                                  th:text="${r.status}"></span>
+                </td>
+                <td th:text="${r.depositAmount}"></td>
+                <td>
+                    <a th:href="@{/reservation/cancel/{id}(id=${r.id})}" class="btn btn-danger btn-sm"
+                       th:if="${r.status == 'pending' or r.status == 'confirmed'}"
+                       onclick="return confirm('确认取消预约？')">取消</a>
+                </td>
+            </tr>
+            <tr th:if="${page.list == null or page.list.empty}">
+                <td colspan="8" style="text-align:center; color:#999;">暂无数据</td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="pagination">
+            <a th:href="@{/reservation/list(page=${page.pageNum-1})}" th:class="${page.pageNum <= 1} ? 'disabled' : ''">上一页</a>
+            <span th:each="i : ${#numbers.sequence(1, page.pages)}">
+                    <a th:href="@{/reservation/list(page=${i})}" th:text="${i}" th:class="${i == page.pageNum} ? 'active' : ''"></a>
+                </span>
+            <a th:href="@{/reservation/list(page=${page.pageNum+1})}" th:class="${page.pageNum >= page.pages} ? 'disabled' : ''">下一页</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

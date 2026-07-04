@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>白名单管理</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">✅ 白名单管理</div>
+        <form th:action="@{/white-list/add}" method="post" style="margin-bottom:15px; display:flex; gap:10px; flex-wrap:wrap;">
+            <input type="text" name="plateNumber" placeholder="车牌号" class="form-control" style="width:150px;" required>
+            <input type="date" name="expireDate" placeholder="过期日期" class="form-control" style="width:150px;">
+            <button type="submit" class="btn btn-primary">新增白名单</button>
+        </form>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>编号</th>
+                <th>车牌号</th>
+                <th>过期日期</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="w : ${whiteList}">
+                <td th:text="${w.id}"></td>
+                <td th:text="${w.plateNumber}"></td>
+                <td th:text="${w.expireDate}"></td>
+                <td th:text="${w.status}"></td>
+                <td>
+                    <a th:href="@{/white-list/delete/{id}(id=${w.id})}" class="btn btn-danger" onclick="return confirm('确认移除？')">移除</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>会员中心</title>
+    <style>
+        .section { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .section-title { font-size: 16px; font-weight: 600; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; }
+        .level-card { display: flex; align-items: center; gap: 16px; padding: 16px; border-radius: 8px; background: linear-gradient(135deg, #f6f0ff, #f0f5ff); }
+        .level-badge { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+        .level-info h4 { margin: 0 0 4px 0; font-size: 18px; }
+        .level-info p { margin: 0; color: #666; font-size: 13px; }
+        .benefit-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+        .benefit-tag { padding: 4px 12px; border-radius: 4px; font-size: 12px; background: #e6f7ff; color: #1890ff; }
+        .points-display { text-align: center; padding: 20px; }
+        .points-num { font-size: 42px; font-weight: 700; color: #722ed1; }
+        .points-label { font-size: 13px; color: #999; margin-top: 4px; }
+        .empty-tip { text-align: center; color: #999; padding: 24px; font-size: 14px; }
+        .coupon-tabs { display: flex; gap: 0; margin-bottom: 14px; border-bottom: 2px solid #f0f0f0; }
+        .coupon-tab { padding: 8px 16px; cursor: pointer; font-size: 14px; color: #666; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: 0.2s; }
+        .coupon-tab.active { color: #1890ff; border-bottom-color: #1890ff; }
+        .coupon-list { display: none; }
+        .coupon-list.active { display: block; }
+        .coupon-item { display: flex; align-items: center; gap: 12px; padding: 12px; margin-bottom: 8px; border-radius: 6px; background: #fafafa; border-left: 3px solid #52c41a; }
+        .coupon-item.used { border-left-color: #d9d9d9; opacity: 0.6; }
+        .coupon-item.expired { border-left-color: #ff4d4f; opacity: 0.6; }
+        .coupon-amount { font-size: 22px; font-weight: 700; color: #ff4d4f; min-width: 70px; text-align: center; }
+        .coupon-amount.discount { color: #faad14; }
+        .coupon-info h4 { margin: 0; font-size: 14px; }
+        .coupon-info p { margin: 2px 0 0 0; font-size: 12px; color: #999; }
+        .level-progress { margin-top: 12px; }
+        .level-bar { height: 6px; background: #f0f0f0; border-radius: 3px; margin: 6px 0; }
+        .level-bar-fill { height: 6px; background: linear-gradient(90deg, #1890ff, #722ed1); border-radius: 3px; transition: width 0.3s; }
+        .level-steps { display: flex; justify-content: space-between; font-size: 11px; color: #999; }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <!-- ========== 会员等级 ========== -->
+    <div class="section">
+        <div class="section-title">🏅 会员等级</div>
+        <div th:if="${memberLevel != null}">
+            <div class="level-card">
+                <div class="level-badge" th:style="'background:' + (${memberLevel.levelCode == 'diamond' ? '#f9f0ff' : (${memberLevel.levelCode == 'gold' ? '#fffbe6' : (${memberLevel.levelCode == 'silver' ? '#f0f5ff' : '#f5f5f5')}))">
+                    <span th:if="${memberLevel.levelCode == 'diamond'}">💎</span>
+                    <span th:if="${memberLevel.levelCode == 'gold'}">🥇</span>
+                    <span th:if="${memberLevel.levelCode == 'silver'}">🥈</span>
+                    <span th:if="${memberLevel.levelCode == 'normal' || memberLevel.levelCode == null}">🥉</span>
+                </div>
+                <div class="level-info">
+                    <h4 th:text="${memberLevel.levelName}">普通会员</h4>
+                    <div class="benefit-row">
+                        <span class="benefit-tag" th:if="${memberLevel.discountRate != null}">折扣率：<b th:text="${#numbers.formatDecimal(memberLevel.discountRate, 0, 'COMMA', 2, 'POINT')}"></b></span>
+                        <span class="benefit-tag" th:if="${memberLevel.monthlyFreeMinutes != null}">每月免费 <b th:text="${memberLevel.monthlyFreeMinutes}"></b> 分钟</span>
+                    </div>
+                </div>
+            </div>
+            <!-- 等级进度条 -->
+            <div class="level-progress" th:if="${!#lists.isEmpty(allLevels) && allLevels.size() > 1}">
+                <div class="level-bar">
+                    <div class="level-bar-fill" th:style="'width:' + ${memberLevel.id >= allLevels.size() ? 100 : (memberLevel.id * 100 / allLevels.size())} + '%'"></div>
+                </div>
+                <div class="level-steps">
+                    <span th:each="lv, iter : ${allLevels}" th:text="${lv.levelName}" th:style="${iter.last} ? '' : ''"></span>
+                </div>
+            </div>
+        </div>
+        <div th:if="${memberLevel == null}" class="empty-tip">暂无会员等级信息</div>
+    </div>
+
+    <!-- ========== 我的积分 ========== -->
+    <div class="section">
+        <div class="section-title">⭐ 我的积分</div>
+        <div class="points-display">
+            <div class="points-num" th:text="${points}">0</div>
+            <div class="points-label">当前积分余额</div>
+        </div>
+        <div th:if="${!#lists.isEmpty(pointsRecords)}">
+            <table class="table" style="margin-top:12px;">
+                <thead>
+                <tr>
+                    <th>时间</th>
+                    <th>类型</th>
+                    <th>积分变动</th>
+                    <th>说明</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${pointsRecords}">
+                    <td th:text="${#temporals.format(r.createTime, 'yyyy-MM-dd HH:mm')}"></td>
+                    <td>
+                        <span class="badge" th:class="${r.points > 0} ? 'badge-success' : 'badge-danger'" th:text="${r.points > 0} ? '收入' : '支出'"></span>
+                    </td>
+                    <td th:text="${r.points > 0} ? '+' + r.points : r.points"></td>
+                    <td th:text="${r.description}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div th:if="${#lists.isEmpty(pointsRecords)}" class="empty-tip">暂无积分变动记录</div>
+    </div>
+
+    <!-- ========== 我的优惠券 ========== -->
+    <div class="section">
+        <div class="section-title">🎫 我的优惠券</div>
+        <div class="coupon-tabs">
+            <div class="coupon-tab active" onclick="switchCouponTab('available')">可用 (<span th:text="${#lists.size(availableCoupons)}">0</span>)</div>
+            <div class="coupon-tab" onclick="switchCouponTab('used')">已使用 (<span th:text="${#lists.size(usedCoupons)}">0</span>)</div>
+            <div class="coupon-tab" onclick="switchCouponTab('expired')">已过期 (<span th:text="${#lists.size(expiredCoupons)}">0</span>)</div>
+        </div>
+
+        <div id="tab-available" class="coupon-list active">
+            <div th:each="c : ${availableCoupons}" class="coupon-item">
+                <div class="coupon-amount" th:class="${c.couponType == 'amount' ? 'coupon-amount' : 'coupon-amount discount'}">
+                    <span th:if="${c.couponType == 'amount'}">¥<span th:text="${c.discountValue}"></span></span>
+                    <span th:if="${c.couponType != 'amount'}" th:text="${c.discountValue}"></span>
+                </div>
+                <div class="coupon-info">
+                    <h4 th:text="${c.couponName}"></h4>
+                    <p th:if="${c.minAmount != null && c.minAmount > 0}">满 ¥<span th:text="${c.minAmount}"></span> 可用</p>
+                    <p>有效期至：<span th:text="${#temporals.format(c.endTime, 'yyyy-MM-dd HH:mm')}"></span></p>
+                </div>
+            </div>
+            <div th:if="${#lists.isEmpty(availableCoupons)}" class="empty-tip">暂无可用优惠券</div>
+        </div>
+
+        <div id="tab-used" class="coupon-list">
+            <div th:each="c : ${usedCoupons}" class="coupon-item used">
+                <div class="coupon-amount" th:class="${c.couponType == 'amount' ? 'coupon-amount' : 'coupon-amount discount'}">
+                    <span th:if="${c.couponType == 'amount'}">¥<span th:text="${c.discountValue}"></span></span>
+                    <span th:if="${c.couponType != 'amount'}" th:text="${c.discountValue}"></span>
+                </div>
+                <div class="coupon-info">
+                    <h4 th:text="${c.couponName}"></h4>
+                    <p>使用时间：<span th:text="${c.useTime != null ? #temporals.format(c.useTime, 'yyyy-MM-dd HH:mm') : '-'}"></span></p>
+                </div>
+            </div>
+            <div th:if="${#lists.isEmpty(usedCoupons)}" class="empty-tip">暂无已使用优惠券</div>
+        </div>
+
+        <div id="tab-expired" class="coupon-list">
+            <div th:each="c : ${expiredCoupons}" class="coupon-item expired">
+                <div class="coupon-amount" th:class="${c.couponType == 'amount' ? 'coupon-amount' : 'coupon-amount discount'}">
+                    <span th:if="${c.couponType == 'amount'}">¥<span th:text="${c.discountValue}"></span></span>
+                    <span th:if="${c.couponType != 'amount'}" th:text="${c.discountValue}"></span>
+                </div>
+                <div class="coupon-info">
+                    <h4 th:text="${c.couponName}"></h4>
+                    <p>有效期至：<span th:text="${#temporals.format(c.endTime, 'yyyy-MM-dd HH:mm')}"></span></p>
+                </div>
+            </div>
+            <div th:if="${#lists.isEmpty(expiredCoupons)}" class="empty-tip">暂无已过期优惠券</div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function switchCouponTab(tab) {
+        document.querySelectorAll('.coupon-tab').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.coupon-list').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+        event.target.classList.add('active');
+    }
+</script>
+</body>
+</html>

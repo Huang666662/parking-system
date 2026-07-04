@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS points_record (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    points INT NOT NULL DEFAULT 0,
+    type VARCHAR(20),
+    description VARCHAR(255),
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP
+);

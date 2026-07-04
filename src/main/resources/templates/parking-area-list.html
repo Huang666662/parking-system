@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>区域管理</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">🏢 区域管理</div>
+        <form th:action="@{/parking-area/add}" method="post" style="margin-bottom:15px; display:flex; gap:10px; flex-wrap:wrap;">
+            <input type="text" name="areaName" placeholder="区域名称" class="form-control" style="width:150px;" required>
+            <input type="number" name="floor" placeholder="楼层" class="form-control" style="width:100px;" required>
+            <input type="number" name="totalSpaces" placeholder="总车位数" class="form-control" style="width:120px;" required>
+            <input type="text" name="description" placeholder="描述" class="form-control" style="width:200px;">
+            <button type="submit" class="btn btn-primary">新增区域</button>
+        </form>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>编号</th>
+                <th>区域名称</th>
+                <th>楼层</th>
+                <th>总车位数</th>
+                <th>描述</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="a : ${areas}">
+                <td th:text="${a.id}"></td>
+                <td th:text="${a.areaName}"></td>
+                <td th:text="${a.floor}"></td>
+                <td th:text="${a.totalSpaces}"></td>
+                <td th:text="${a.description}"></td>
+                <td>
+                    <a th:href="@{/parking-area/delete/{id}(id=${a.id})}" class="btn btn-danger" onclick="return confirm('确认删除？')">删除</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

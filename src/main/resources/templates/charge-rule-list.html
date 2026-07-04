@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>计费规则管理</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">💰 计费规则管理</div>
+        <form th:action="@{/charge-rule/add}" method="post" style="margin-bottom:15px; display:flex; gap:10px; flex-wrap:wrap;">
+            <input type="text" name="ruleName" placeholder="规则名称" class="form-control" style="width:150px;" required>
+            <select name="ruleType" class="form-control" style="width:120px;" required>
+                <option value="hourly">按时计费</option>
+                <option value="daily">按天计费</option>
+            </select>
+            <input type="number" step="0.01" name="unitPrice" placeholder="单价(元)" class="form-control" style="width:120px;" required>
+            <input type="number" name="freeMinutes" placeholder="免费时长(分)" class="form-control" style="width:130px;" required>
+            <input type="number" step="0.01" name="capPrice" placeholder="封顶金额(元)" class="form-control" style="width:130px;" required>
+            <button type="submit" class="btn btn-primary">新增规则</button>
+        </form>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>编号</th>
+                <th>规则名称</th>
+                <th>类型</th>
+                <th>单价</th>
+                <th>免费时长</th>
+                <th>封顶金额</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="r : ${rules}">
+                <td th:text="${r.id}"></td>
+                <td th:text="${r.ruleName}"></td>
+                <td th:text="${r.ruleType}"></td>
+                <td th:text="${r.unitPrice}"></td>
+                <td th:text="${r.freeMinutes}"></td>
+                <td th:text="${r.capPrice}"></td>
+                <td th:text="${r.isActive == 1 ? '启用' : '停用'}"></td>
+                <td>
+                    <a th:href="@{/charge-rule/delete/{id}(id=${r.id})}" class="btn btn-danger" onclick="return confirm('确认删除？')">删除</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>优惠券管理</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">🎫 优惠券管理</div>
+        <form th:action="@{/coupon/add}" method="post" style="margin-bottom:15px; display:flex; gap:10px; flex-wrap:wrap;">
+            <input type="text" name="couponName" placeholder="优惠券名称" class="form-control" style="width:150px;" required>
+            <select name="couponType" class="form-control" style="width:120px;" required>
+                <option value="amount">满减券</option>
+                <option value="discount">折扣券</option>
+            </select>
+            <input type="number" step="0.01" name="discountValue" placeholder="抵扣值" class="form-control" style="width:100px;" required>
+            <input type="number" step="0.01" name="minAmount" placeholder="最低消费" class="form-control" style="width:100px;" required>
+            <input type="number" name="totalQuantity" placeholder="发放数量" class="form-control" style="width:100px;" required>
+            <input type="datetime-local" name="endTime" placeholder="截止时间" class="form-control" style="width:180px;" required>
+            <button type="submit" class="btn btn-primary">新增优惠券</button>
+        </form>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>编号</th>
+                <th>名称</th>
+                <th>类型</th>
+                <th>抵扣值</th>
+                <th>最低消费</th>
+                <th>剩余数量</th>
+                <th>截止时间</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="c : ${coupons}">
+                <td th:text="${c.id}"></td>
+                <td th:text="${c.couponName}"></td>
+                <td th:text="${c.couponType}"></td>
+                <td th:text="${c.discountValue}"></td>
+                <td th:text="${c.minAmount}"></td>
+                <td th:text="${c.remainingQuantity}"></td>
+                <td th:text="${#temporals.format(c.endTime, 'yyyy-MM-dd HH:mm')}"></td>
+                <td>
+                    <a th:href="@{/coupon/delete/{id}(id=${c.id})}" class="btn btn-danger" onclick="return confirm('确认停用？')">停用</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

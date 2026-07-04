@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>系统配置</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">⚙️ 系统配置</div>
+        <form th:action="@{/system-config/add}" method="post" style="margin-bottom:15px; display:flex; gap:10px; flex-wrap:wrap;">
+            <input type="text" name="configKey" placeholder="配置项" class="form-control" style="width:150px;" required>
+            <input type="text" name="configValue" placeholder="配置值" class="form-control" style="width:200px;" required>
+            <input type="text" name="description" placeholder="说明" class="form-control" style="width:250px;">
+            <button type="submit" class="btn btn-primary">新增配置</button>
+        </form>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>编号</th>
+                <th>配置项</th>
+                <th>配置值</th>
+                <th>说明</th>
+                <th>更新时间</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="c : ${configs}">
+                <td th:text="${c.id}"></td>
+                <td th:text="${c.configKey}"></td>
+                <td th:text="${c.configValue}"></td>
+                <td th:text="${c.description}"></td>
+                <td th:text="${#temporals.format(c.updateTime, 'yyyy-MM-dd HH:mm')}"></td>
+                <td>
+                    <a th:href="@{/system-config/delete/{id}(id=${c.id})}" class="btn btn-danger" onclick="return confirm('确认删除？')">删除</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>数据统计</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">📊 数据统计</div>
+        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+            <div class="card" style="flex:1; min-width:150px; text-align:center; background:#e6f7ff;">
+                <h3>总车位</h3>
+                <p style="font-size: 28px; color:#1890ff;" th:text="${totalSpaces}">0</p>
+            </div>
+            <div class="card" style="flex:1; min-width:150px; text-align:center; background:#f6ffed;">
+                <h3>空闲车位</h3>
+                <p style="font-size: 28px; color:#52c41a;" th:text="${freeSpaces}">0</p>
+            </div>
+            <div class="card" style="flex:1; min-width:150px; text-align:center; background:#fffbe6;">
+                <h3>当前停放</h3>
+                <p style="font-size: 28px; color:#faad14;" th:text="${currentParked}">0</p>
+            </div>
+            <div class="card" style="flex:1; min-width:150px; text-align:center; background:#f9f0ff;">
+                <h3>车位使用率</h3>
+                <p style="font-size: 28px; color:#722ed1;" th:text="${totalSpaces > 0 ? T(java.lang.String).format('%.1f%%', (totalSpaces - freeSpaces) * 100.0 / totalSpaces) : '0.0%'}">0%</p>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

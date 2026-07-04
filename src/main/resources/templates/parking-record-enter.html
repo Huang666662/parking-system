@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>车辆入场</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">🚗 车辆入场</div>
+        <form th:action="@{/parking-record/enter}" method="post">
+            <div class="form-group">
+                <label for="plateNumber">车牌号</label>
+                <input type="text" id="plateNumber" name="plateNumber" class="form-control" placeholder="请输入车牌号" required>
+            </div>
+            <div class="form-group">
+                <label for="userId">用户ID（选填）</label>
+                <input type="number" id="userId" name="userId" class="form-control" placeholder="关联用户ID">
+            </div>
+            <div class="form-group">
+                <label for="spaceId">车位ID（选填）</label>
+                <input type="number" id="spaceId" name="spaceId" class="form-control" placeholder="分配车位ID">
+            </div>
+            <button type="submit" class="btn btn-success">确认入场</button>
+            <a th:href="@{/parking-record/list}" class="btn btn-warning">返回</a>
+        </form>
+    </div>
+</div>
+</body>
+</html>

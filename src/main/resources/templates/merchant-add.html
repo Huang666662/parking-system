@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>新增商户</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">➕ 新增商户</div>
+        <form th:action="@{/merchant/add}" method="post">
+            <div class="form-group">
+                <label for="merchantName">商户名称</label>
+                <input type="text" id="merchantName" name="merchantName" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="merchantCode">商户编码</label>
+                <input type="text" id="merchantCode" name="merchantCode" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="contactPerson">联系人</label>
+                <input type="text" id="contactPerson" name="contactPerson" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="contactPhone">联系电话</label>
+                <input type="text" id="contactPhone" name="contactPhone" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="settlementRate">结算比例</label>
+                <input type="number" step="0.01" id="settlementRate" name="settlementRate" class="form-control" value="100">
+            </div>
+            <button type="submit" class="btn btn-primary">保存</button>
+            <a th:href="@{/merchant/list}" class="btn btn-warning">返回</a>
+        </form>
+    </div>
+</div>
+</body>
+</html>

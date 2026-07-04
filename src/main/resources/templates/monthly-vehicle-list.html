@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>月租管理</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">📅 月租管理</div>
+        <form th:action="@{/monthly-vehicle/add}" method="post" style="margin-bottom:15px; display:flex; gap:10px; flex-wrap:wrap;">
+            <input type="number" name="userId" placeholder="用户ID" class="form-control" style="width:120px;" required>
+            <input type="text" name="plateNumber" placeholder="车牌号" class="form-control" style="width:150px;" required>
+            <select name="packageId" class="form-control" style="width:150px;" required>
+                <option th:each="p : ${packages}" th:value="${p.id}" th:text="${p.packageName + ' - ¥' + p.price}"></option>
+            </select>
+            <button type="submit" class="btn btn-primary">新增月租</button>
+        </form>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>编号</th>
+                <th>用户ID</th>
+                <th>车牌号</th>
+                <th>套餐ID</th>
+                <th>开始日期</th>
+                <th>结束日期</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="m : ${monthlyVehicles}">
+                <td th:text="${m.id}"></td>
+                <td th:text="${m.userId}"></td>
+                <td th:text="${m.plateNumber}"></td>
+                <td th:text="${m.packageId}"></td>
+                <td th:text="${m.startDate}"></td>
+                <td th:text="${m.endDate}"></td>
+                <td th:text="${m.status}"></td>
+                <td>
+                    <a th:href="@{/monthly-vehicle/delete/{id}(id=${m.id})}" class="btn btn-danger" onclick="return confirm('确认标记过期？')">标记过期</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

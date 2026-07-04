@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>货运白名单</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">🚛 货运白名单</div>
+        <form th:action="@{/cargo-whitelist/add}" method="post" style="margin-bottom:15px; display:flex; gap:10px; flex-wrap:wrap;">
+            <input type="text" name="plateNumber" placeholder="车牌号" class="form-control" style="width:120px;" required>
+            <input type="number" name="merchantId" placeholder="商户ID" class="form-control" style="width:100px;" required>
+            <input type="text" name="driverName" placeholder="司机姓名" class="form-control" style="width:100px;" required>
+            <input type="text" name="driverPhone" placeholder="司机电话" class="form-control" style="width:130px;" required>
+            <input type="time" name="allowStartTime" class="form-control" style="width:110px;" required>
+            <input type="time" name="allowEndTime" class="form-control" style="width:110px;" required>
+            <input type="date" name="effectiveStartDate" class="form-control" style="width:140px;" required>
+            <input type="date" name="effectiveEndDate" class="form-control" style="width:140px;" required>
+            <button type="submit" class="btn btn-primary">登记</button>
+        </form>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>编号</th>
+                <th>车牌</th>
+                <th>商户ID</th>
+                <th>司机</th>
+                <th>电话</th>
+                <th>允许时段</th>
+                <th>有效日期</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="w : ${list}">
+                <td th:text="${w.id}"></td>
+                <td th:text="${w.plateNumber}"></td>
+                <td th:text="${w.merchantId}"></td>
+                <td th:text="${w.driverName}"></td>
+                <td th:text="${w.driverPhone}"></td>
+                <td th:text="${w.allowStartTime}+' ~ '+${w.allowEndTime}"></td>
+                <td th:text="${w.effectiveStartDate}+' 至 '+${w.effectiveEndDate}"></td>
+                <td th:text="${w.status}"></td>
+                <td>
+                    <a th:href="@{/cargo-whitelist/update-status/{id}(id=${w.id},status='inactive')}" class="btn btn-danger" th:if="${w.status == 'active'}">停用</a>
+                    <a th:href="@{/cargo-whitelist/update-status/{id}(id=${w.id},status='active')}" class="btn btn-primary" th:if="${w.status == 'inactive'}">启用</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

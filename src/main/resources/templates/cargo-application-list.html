@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>卸货申请</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">📋 卸货申请审批</div>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>编号</th>
+                <th>申请单号</th>
+                <th>车牌</th>
+                <th>商户</th>
+                <th>司机</th>
+                <th>电话</th>
+                <th>许可时长(分钟)</th>
+                <th>状态</th>
+                <th>申请时间</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="a : ${list}">
+                <td th:text="${a.id}"></td>
+                <td th:text="${a.applyNo}"></td>
+                <td th:text="${a.plateNumber}"></td>
+                <td th:text="${a.merchantName}"></td>
+                <td th:text="${a.driverName}"></td>
+                <td th:text="${a.driverPhone}"></td>
+                <td th:text="${a.permitDuration}"></td>
+                <td th:text="${a.status}"></td>
+                <td th:text="${#temporals.format(a.applyTime, 'yyyy-MM-dd HH:mm')}"></td>
+                <td>
+                    <a th:href="@{/cargo-application/approve/{id}(id=${a.id},status='approved')}" class="btn btn-primary" th:if="${a.status == 'pending'}">通过</a>
+                    <a th:href="@{/cargo-application/approve/{id}(id=${a.id},status='rejected')}" class="btn btn-danger" th:if="${a.status == 'pending'}">拒绝</a>
+                    <span th:if="${a.status != 'pending'}" th:text="${a.status}"></span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

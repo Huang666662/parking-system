@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>用户管理</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">👤 用户管理</div>
+        <div style="margin-bottom:15px;">
+            <form th:action="@{/user/list}" method="get" style="display:flex; gap:10px;">
+                <input type="text" name="username" placeholder="输入用户名搜索" class="form-control" style="width:200px;" th:value="${username}">
+                <button type="submit" class="btn btn-primary">搜索</button>
+            </form>
+        </div>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>编号</th>
+                <th>用户名</th>
+                <th>手机号</th>
+                <th>积分</th>
+                <th>会员等级</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="u : ${page.list}">
+                <td th:text="${u.id}"></td>
+                <td th:text="${u.username}"></td>
+                <td th:text="${u.phone}"></td>
+                <td th:text="${u.points}"></td>
+                <td th:text="${u.memberLevelId}"></td>
+                <td>
+                            <span class="badge" th:class="${u.status == 1 ? 'badge-success' : (u.status == 0 ? 'badge-warning' : 'badge-danger')}"
+                                  th:text="${u.status == 1 ? '正常' : (u.status == 0 ? '待审核' : '冻结')}"></span>
+                </td>
+                <td>
+                    <a th:href="@{/user/audit/{id}(id=${u.id}, status=1)}" class="btn btn-success btn-sm" th:if="${u.status == 0}">通过</a>
+                    <a th:href="@{/user/audit/{id}(id=${u.id}, status=2)}" class="btn btn-danger btn-sm" th:if="${u.status == 1}">冻结</a>
+                    <a th:href="@{/user/audit/{id}(id=${u.id}, status=1)}" class="btn btn-success btn-sm" th:if="${u.status == 2}">解冻</a>
+                    <a th:href="@{/user/delete/{id}(id=${u.id})}" class="btn btn-danger btn-sm" onclick="return confirm('确认删除？')">删除</a>
+                </td>
+            </tr>
+            <tr th:if="${page.list == null or page.list.empty}">
+                <td colspan="7" style="text-align:center; color:#999;">暂无数据</td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="pagination">
+            <a th:href="@{/user/list(page=${page.pageNum-1}, username=${username})}" th:class="${page.pageNum <= 1} ? 'disabled' : ''">上一页</a>
+            <span th:each="i : ${#numbers.sequence(1, page.pages)}">
+                    <a th:href="@{/user/list(page=${i}, username=${username})}" th:text="${i}" th:class="${i == page.pageNum} ? 'active' : ''"></a>
+                </span>
+            <a th:href="@{/user/list(page=${page.pageNum+1}, username=${username})}" th:class="${page.pageNum >= page.pages} ? 'disabled' : ''">下一页</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>车辆出场</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">🚙 车辆出场</div>
+        <form th:action="@{/parking-record/exit}" method="post">
+            <div class="form-group">
+                <label for="recordId">停车记录ID</label>
+                <input type="number" id="recordId" name="recordId" class="form-control" placeholder="请输入停车记录ID" required>
+            </div>
+            <div class="form-group">
+                <label for="paymentMethod">支付方式</label>
+                <select id="paymentMethod" name="paymentMethod" class="form-control">
+                    <option value="wechat">微信支付</option>
+                    <option value="alipay">支付宝</option>
+                    <option value="cash">现金</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-warning">确认出场</button>
+            <a th:href="@{/parking-record/list}" class="btn btn-primary">返回</a>
+        </form>
+    </div>
+</div>
+</body>
+</html>

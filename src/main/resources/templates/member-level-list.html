@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>会员等级管理</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-title">👑 会员等级管理</div>
+        <form th:action="@{/member-level/add}" method="post" style="margin-bottom:15px; display:flex; gap:10px; flex-wrap:wrap;">
+            <input type="text" name="levelName" placeholder="等级名称" class="form-control" style="width:150px;" required>
+            <input type="text" name="levelCode" placeholder="等级编码" class="form-control" style="width:150px;" required>
+            <input type="number" name="minPoints" placeholder="最低积分" class="form-control" style="width:120px;" required>
+            <input type="number" step="0.01" name="discountRate" placeholder="折扣率(0-1)" class="form-control" style="width:130px;" required>
+            <input type="number" name="monthlyFreeMinutes" placeholder="月免停时长(分)" class="form-control" style="width:150px;" required>
+            <button type="submit" class="btn btn-primary">新增等级</button>
+        </form>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>编号</th>
+                <th>名称</th>
+                <th>编码</th>
+                <th>最低积分</th>
+                <th>折扣率</th>
+                <th>月免停时长</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="l : ${levels}">
+                <td th:text="${l.id}"></td>
+                <td th:text="${l.levelName}"></td>
+                <td th:text="${l.levelCode}"></td>
+                <td th:text="${l.minPoints}"></td>
+                <td th:text="${l.discountRate}"></td>
+                <td th:text="${l.monthlyFreeMinutes}"></td>
+                <td>
+                    <a th:href="@{/member-level/delete/{id}(id=${l.id})}" class="btn btn-danger" onclick="return confirm('确认删除？')">删除</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>
