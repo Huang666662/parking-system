@@ -41,6 +41,12 @@ public class ParkingRecordController {
     private IMemberLevelService memberLevelService;
 
     @Autowired
+    private ICouponService couponService;
+
+    @Autowired
+    private IUserCouponService userCouponService;
+
+    @Autowired
     private OperationLogHelper operationLogHelper;
 
     @GetMapping("/list")
@@ -61,7 +67,6 @@ public class ParkingRecordController {
             list.removeIf(r -> !currentUserId.equals(r.getUserId()));
         }
 
-        // 预格式化日期
         List<Map<String, Object>> recordList = new ArrayList<>();
         for (ParkingRecord r : list) {
             Map<String, Object> entry = new HashMap<>();
@@ -98,7 +103,6 @@ public class ParkingRecordController {
                         @RequestParam(required = false) Long spaceId,
                         HttpSession session,
                         RedirectAttributes redirectAttributes) {
-        // 普通用户自动关联当前用户ID
         if ("user".equals(session.getAttribute("userType")) && userId == null) {
             User u = (User) session.getAttribute("user");
             if (u != null) userId = u.getId();
@@ -151,9 +155,13 @@ public class ParkingRecordController {
     @PostMapping("/exit")
     public String exit(@RequestParam Long recordId,
                        @RequestParam String paymentMethod,
+                       @RequestParam(required = false) Integer usePoints,
+                       @RequestParam(required = false) Long userCouponId,
                        HttpSession session) {
         ParkingRecord record = parkingRecordService.getRecord(recordId);
-        parkingRecordService.exit(recordId, paymentMethod);
+        parkingRecordService.exit(recordId, paymentMethod,
+                usePoints != null ? usePoints : 0,
+                userCouponId);
         operationLogHelper.log(session, "车辆出场", "车辆出场，记录ID：" + recordId + (record != null ? "，车牌：" + record.getPlateNumber() : ""));
         return "redirect:/parking-record/list";
     }
@@ -170,13 +178,60 @@ public class ParkingRecordController {
                 || !user.getId().equals(record.getUserId())) {
             return "redirect:/parking-record/list";
         }
+
+        // 刷新用户信息
+        User freshUser = userService.getUser(user.getId());
+        session.setAttribute("user", freshUser);
+
         addFeePreviewToModel(record, model);
+
+        // 用户积分
+        int points = freshUser.getPoints() != null ? freshUser.getPoints() : 0;
+        model.addAttribute("userPoints", points);
+        int exchangeRate = getConfigInt("points_exchange_rate", 100);
+        model.addAttribute("exchangeRate", exchangeRate);
+
+        // 可用优惠券
+        List<UserCoupon> userCoupons = userCouponService.listUnusedByUser(user.getId());
+        List<Map<String, Object>> availableCoupons = new ArrayList<>();
+        for (UserCoupon uc : userCoupons) {
+            Coupon coupon = couponService.getCoupon(uc.getCouponId());
+            if (coupon == null || coupon.getStatus() == null || coupon.getStatus() != 1) continue;
+            if (coupon.getEndTime() != null && coupon.getEndTime().isBefore(LocalDateTime.now())) continue;
+
+            Map<String, Object> entry = new HashMap<>();
+            entry.put("userCouponId", uc.getId());
+            entry.put("couponName", coupon.getCouponName());
+            entry.put("couponType", coupon.getCouponType());
+            entry.put("discountValue", coupon.getDiscountValue());
+            if (coupon.getMinAmount() != null && coupon.getMinAmount().compareTo(BigDecimal.ZERO) > 0) {
+                entry.put("minAmount", coupon.getMinAmount());
+            }
+
+            // 预生成优惠券标签
+            StringBuilder label = new StringBuilder(coupon.getCouponName());
+            if ("amount".equals(coupon.getCouponType())) {
+                label.append(" - ¥").append(coupon.getDiscountValue());
+            } else {
+                label.append(" - ").append(coupon.getDiscountValue()).append("折");
+            }
+            if (coupon.getMinAmount() != null && coupon.getMinAmount().compareTo(BigDecimal.ZERO) > 0) {
+                label.append(" (满").append(coupon.getMinAmount()).append("元可用)");
+            }
+            entry.put("couponLabel", label.toString());
+
+            availableCoupons.add(entry);
+        }
+        model.addAttribute("availableCoupons", availableCoupons);
+
         return "parking-record-user-exit";
     }
 
     @PostMapping("/user-exit/{id}")
     public String userExit(@PathVariable Long id,
                            @RequestParam String paymentMethod,
+                           @RequestParam(required = false) Integer usePoints,
+                           @RequestParam(required = false) Long userCouponId,
                            HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null) return "redirect:/login";
@@ -186,7 +241,9 @@ public class ParkingRecordController {
                 || !user.getId().equals(record.getUserId())) {
             return "redirect:/parking-record/list";
         }
-        parkingRecordService.exit(id, paymentMethod);
+        parkingRecordService.exit(id, paymentMethod,
+                usePoints != null ? usePoints : 0,
+                userCouponId);
         return "redirect:/order/list";
     }
 
@@ -198,14 +255,18 @@ public class ParkingRecordController {
         model.addAttribute("durationMinutes",
                 Duration.between(record.getEnterTime(), LocalDateTime.now()).toMinutes());
 
-        FeePreview fee = calculateFeePreview(record);
+        FeePreview fee = calculateFeePreview(record, null, null);
         model.addAttribute("originalFee", fee.originalFee);
-        model.addAttribute("discountFee", fee.discountFee);
+        model.addAttribute("memberDiscount", fee.memberDiscount);
+        model.addAttribute("couponDiscount", fee.couponDiscount);
+        model.addAttribute("pointsDiscount", fee.pointsDiscount);
+        model.addAttribute("discountFee", fee.totalDiscount);
         model.addAttribute("actualFee", fee.actualFee);
         model.addAttribute("memberLevelName", fee.memberLevelName);
+        model.addAttribute("memberDiscountRate", fee.memberDiscountRate);
     }
 
-    private FeePreview calculateFeePreview(ParkingRecord record) {
+    private FeePreview calculateFeePreview(ParkingRecord record, Integer usePoints, Long userCouponId) {
         FeePreview result = new FeePreview();
         long minutes = Duration.between(record.getEnterTime(), LocalDateTime.now()).toMinutes();
 
@@ -222,23 +283,74 @@ public class ParkingRecordController {
         if (capPrice != null && originalFee.compareTo(capPrice) > 0) {
             originalFee = capPrice;
         }
+        originalFee = originalFee.max(BigDecimal.ZERO);
         result.originalFee = originalFee.setScale(2, RoundingMode.HALF_UP);
 
-        BigDecimal discountFee = BigDecimal.ZERO;
+        BigDecimal currentFee = result.originalFee;
+
+        // 会员折扣
         Long userId = record.getUserId();
+        MemberLevel level = null;
         if (userId != null) {
             User user = userService.getUser(userId);
             if (user != null && user.getMemberLevelId() != null) {
-                MemberLevel level = memberLevelService.getLevel(user.getMemberLevelId());
-                if (level != null && level.getDiscountRate() != null) {
-                    BigDecimal rate = level.getDiscountRate();
-                    discountFee = originalFee.multiply(BigDecimal.ONE.subtract(rate)).setScale(2, RoundingMode.HALF_UP);
+                level = memberLevelService.getLevel(user.getMemberLevelId());
+                if (level != null && level.getDiscountRate() != null
+                        && level.getDiscountRate().compareTo(BigDecimal.ONE) < 0) {
                     result.memberLevelName = level.getLevelName();
+                    result.memberDiscountRate = level.getDiscountRate();
+                    BigDecimal afterDiscount = originalFee.multiply(level.getDiscountRate())
+                            .setScale(2, RoundingMode.HALF_UP);
+                    result.memberDiscount = originalFee.subtract(afterDiscount);
+                    currentFee = afterDiscount;
                 }
             }
         }
-        result.discountFee = discountFee;
-        result.actualFee = originalFee.subtract(discountFee).max(BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP);
+
+        // 优惠券折扣预览
+        if (userCouponId != null && currentFee.compareTo(BigDecimal.ZERO) > 0 && userId != null) {
+            UserCoupon userCoupon = userCouponService.getUserCoupon(userCouponId);
+            if (userCoupon != null && "unused".equals(userCoupon.getStatus())
+                    && userCoupon.getUserId().equals(userId)) {
+                Coupon coupon = couponService.getCoupon(userCoupon.getCouponId());
+                if (coupon != null && coupon.getStatus() != null && coupon.getStatus() == 1) {
+                    BigDecimal minAmount = coupon.getMinAmount() != null ? coupon.getMinAmount() : BigDecimal.ZERO;
+                    if (currentFee.compareTo(minAmount) >= 0) {
+                        if ("amount".equals(coupon.getCouponType())) {
+                            BigDecimal discountValue = coupon.getDiscountValue() != null
+                                    ? coupon.getDiscountValue() : BigDecimal.ZERO;
+                            result.couponDiscount = discountValue.min(currentFee);
+                            currentFee = currentFee.subtract(result.couponDiscount);
+                        } else {
+                            BigDecimal discountRate = coupon.getDiscountValue() != null
+                                    ? coupon.getDiscountValue() : BigDecimal.ONE;
+                            BigDecimal afterCoupon = currentFee.multiply(discountRate)
+                                    .setScale(2, RoundingMode.HALF_UP);
+                            result.couponDiscount = currentFee.subtract(afterCoupon);
+                            currentFee = afterCoupon;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 积分抵扣预览
+        if (usePoints != null && usePoints > 0 && userId != null && currentFee.compareTo(BigDecimal.ZERO) > 0) {
+            User user = userService.getUser(userId);
+            int userPoints = user != null && user.getPoints() != null ? user.getPoints() : 0;
+            int actualPoints = Math.min(usePoints, userPoints);
+            if (actualPoints > 0) {
+                int exchangeRate = getConfigInt("points_exchange_rate", 100);
+                BigDecimal pointsToYuan = new BigDecimal(actualPoints)
+                        .divide(new BigDecimal(exchangeRate), 2, RoundingMode.HALF_UP);
+                result.pointsDiscount = pointsToYuan.min(currentFee);
+                currentFee = currentFee.subtract(result.pointsDiscount);
+            }
+        }
+
+        result.actualFee = currentFee.max(BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP);
+        result.totalDiscount = result.originalFee.subtract(result.actualFee).max(BigDecimal.ZERO)
+                .setScale(2, RoundingMode.HALF_UP);
         return result;
     }
 
@@ -264,8 +376,12 @@ public class ParkingRecordController {
 
     private static class FeePreview {
         BigDecimal originalFee = BigDecimal.ZERO;
-        BigDecimal discountFee = BigDecimal.ZERO;
+        BigDecimal memberDiscount = BigDecimal.ZERO;
+        BigDecimal couponDiscount = BigDecimal.ZERO;
+        BigDecimal pointsDiscount = BigDecimal.ZERO;
+        BigDecimal totalDiscount = BigDecimal.ZERO;
         BigDecimal actualFee = BigDecimal.ZERO;
         String memberLevelName;
+        BigDecimal memberDiscountRate;
     }
 }

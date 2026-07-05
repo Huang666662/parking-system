@@ -10,5 +10,5 @@ public interface IParkingRecordService {
     ParkingRecord getCurrentByPlate(String plateNumber);
     List<ParkingRecord> listRecords(String plateNumber);
     void enter(String plateNumber, Long userId, Long spaceId);
-    void exit(Long recordId, String paymentMethod);
+    void exit(Long recordId, String paymentMethod, Integer usePoints, Long userCouponId);
 }

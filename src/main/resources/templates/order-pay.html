@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <title>订单支付</title>
     <style>
-        .pay-card { max-width: 500px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+        .pay-card { max-width: 550px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
         .pay-amount { font-size: 36px; font-weight: 700; color: #ff4d4f; margin: 20px 0; }
         .pay-info { text-align: left; margin: 20px 0; padding: 16px; background: #fafafa; border-radius: 8px; }
         .pay-info p { margin: 6px 0; font-size: 14px; color: #666; }
@@ -17,20 +17,77 @@
         .pay-method .icon { font-size: 28px; display: block; margin-bottom: 4px; }
         .pay-method .label { font-size: 13px; color: #333; }
         .pay-btn { width: 100%; padding: 12px; font-size: 16px; border-radius: 8px; margin-top: 16px; }
+        .form-group { margin-bottom: 12px; text-align: left; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 14px; color: #333; }
+        .form-group select, .form-group input { width: 100%; padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 14px; }
+        .form-group .hint { font-size: 12px; color: #999; margin-top: 2px; }
+        .points-row { display: flex; gap: 8px; align-items: center; }
+        .points-row input { flex: 1; }
+        .points-row .max-btn { padding: 8px 12px; font-size: 12px; border: 1px solid #1890ff; border-radius: 6px; color: #1890ff; background: #fff; cursor: pointer; white-space: nowrap; }
+        .points-row .max-btn:hover { background: #e6f7ff; }
+        .section-title { font-weight: 600; font-size: 14px; color: #333; margin-bottom: 8px; text-align: left; }
+        .fee-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; }
+        .fee-row .label { color: #666; }
+        .fee-row .value { font-weight: 600; }
+        .discount-row { color: #52c41a; }
     </style>
 </head>
 <body>
 <div layout:fragment="content">
     <div class="pay-card">
         <h3>💳 订单支付</h3>
-        <div class="pay-amount">¥<span th:text="${order.totalAmount}"></span></div>
+
+        <div class="pay-info" id="feeBreakdown" th:attr="data-user-points=${userPoints},data-exchange-rate=${exchangeRate}">
+            <div class="fee-row">
+                <span class="label">订单金额</span>
+                <span class="value">¥<span th:text="${order.totalAmount}" id="orderAmount">0.00</span></span>
+            </div>
+            <div class="fee-row discount-row" id="couponDiscountRow" style="display:none;">
+                <span class="label">优惠券抵扣 <span id="couponNameLabel"></span></span>
+                <span class="value">-¥<span id="previewCouponDiscount">0.00</span></span>
+            </div>
+            <div class="fee-row discount-row" id="pointsDiscountRow" style="display:none;">
+                <span class="label">积分抵扣</span>
+                <span class="value">-¥<span id="previewPointsDiscount">0.00</span></span>
+            </div>
+            <hr style="margin: 8px 0; border: none; border-top: 1px solid #e8e8e8;">
+            <div class="fee-row" style="font-size:18px; font-weight:700; color:#ff4d4f;">
+                <span>实付金额</span>
+                <span>¥<span id="previewActualFee" th:text="${order.totalAmount}">0.00</span></span>
+            </div>
+        </div>
+
         <div class="pay-info">
             <p>订单号：<span th:text="${order.orderNo}"></span></p>
             <p>车牌号：<span th:text="${order.plateNumber}"></span></p>
             <p>创建时间：<span th:text="${createTimeStr}"></span></p>
         </div>
 
-        <form th:action="@{/order/pay/{id}(id=${order.id})}" method="post">
+        <form th:action="@{/order/pay/{id}(id=${order.id})}" method="post" id="payForm">
+            <!-- 优惠券选择 -->
+            <div class="form-group" th:if="${availableCoupons != null and !availableCoupons.isEmpty()}">
+                <div class="section-title">🎫 选择优惠券</div>
+                <select name="userCouponId" id="couponSelect">
+                    <option value="">不使用优惠券</option>
+                    <option th:each="c : ${availableCoupons}"
+                            th:value="${c.userCouponId}"
+                            th:data-type="${c.couponType}"
+                            th:data-value="${c.discountValue}"
+                            th:data-min="${c.minAmount != null ? c.minAmount : 0}"
+                            th:text="${c.couponLabel}"></option>
+                </select>
+            </div>
+
+            <!-- 积分抵扣 -->
+            <div class="form-group" th:if="${userPoints > 0}">
+                <div class="section-title">⭐ 积分抵扣 (<span th:text="${userPoints}"></span>积分可用，<span th:text="${exchangeRate}"></span>积分=1元)</div>
+                <div class="points-row">
+                    <input type="number" name="usePoints" id="pointsInput" value="0" min="0" th:max="${userPoints}" placeholder="输入使用积分数量">
+                    <button type="button" class="max-btn" id="maxPointsBtn">全部使用</button>
+                </div>
+                <div class="hint">最多可抵扣 <span id="maxPointsHint">0</span> 积分</div>
+            </div>
+
             <p style="font-weight:600; margin-bottom: 8px;">选择支付方式</p>
             <div class="pay-methods">
                 <label class="pay-method selected" id="method-wechat">
@@ -63,6 +120,81 @@
             this.querySelector('input[type=radio]').checked = true;
         });
     });
+
+    var orderAmount = parseFloat(document.getElementById('orderAmount').textContent) || 0;
+    var userPoints = parseInt(document.getElementById('feeBreakdown').getAttribute('data-user-points')) || 0;
+    var exchangeRate = parseInt(document.getElementById('feeBreakdown').getAttribute('data-exchange-rate')) || 100;
+
+    function updateFeePreview() {
+        var currentFee = orderAmount;
+        var couponDiscount = 0;
+        var pointsDiscount = 0;
+
+        var couponSelect = document.getElementById('couponSelect');
+        if (couponSelect && couponSelect.value) {
+            var option = couponSelect.options[couponSelect.selectedIndex];
+            var couponType = option.getAttribute('data-type');
+            var discountValue = parseFloat(option.getAttribute('data-value')) || 0;
+            var minAmount = parseFloat(option.getAttribute('data-min')) || 0;
+
+            if (currentFee >= minAmount) {
+                if (couponType === 'amount') {
+                    couponDiscount = Math.min(discountValue, currentFee);
+                } else {
+                    couponDiscount = currentFee - (currentFee * discountValue);
+                }
+                currentFee = Math.max(0, currentFee - couponDiscount);
+                document.getElementById('couponNameLabel').textContent = option.text.split(' - ')[0].trim();
+                document.getElementById('couponDiscountRow').style.display = 'flex';
+                document.getElementById('previewCouponDiscount').textContent = couponDiscount.toFixed(2);
+            } else {
+                document.getElementById('couponDiscountRow').style.display = 'none';
+            }
+        } else {
+            document.getElementById('couponDiscountRow').style.display = 'none';
+        }
+
+        var pointsInput = document.getElementById('pointsInput');
+        if (pointsInput && parseInt(pointsInput.value) > 0 && currentFee > 0) {
+            var usePoints = Math.min(parseInt(pointsInput.value) || 0, userPoints);
+            pointsDiscount = Math.min(usePoints / exchangeRate, currentFee);
+            currentFee = Math.max(0, currentFee - pointsDiscount);
+            if (pointsDiscount > 0) {
+                document.getElementById('pointsDiscountRow').style.display = 'flex';
+                document.getElementById('previewPointsDiscount').textContent = pointsDiscount.toFixed(2);
+            } else {
+                document.getElementById('pointsDiscountRow').style.display = 'none';
+            }
+        } else {
+            document.getElementById('pointsDiscountRow').style.display = 'none';
+        }
+
+        document.getElementById('previewActualFee').textContent = currentFee.toFixed(2);
+    }
+
+    if (document.getElementById('couponSelect')) {
+        document.getElementById('couponSelect').addEventListener('change', updateFeePreview);
+    }
+
+    var pointsInput = document.getElementById('pointsInput');
+    if (pointsInput) {
+        var maxByFee = Math.ceil(orderAmount * exchangeRate);
+        var maxAllowed = Math.min(userPoints, maxByFee);
+        pointsInput.setAttribute('max', maxAllowed);
+        document.getElementById('maxPointsHint').textContent = maxAllowed;
+
+        pointsInput.addEventListener('input', function() {
+            var val = parseInt(this.value) || 0;
+            if (val > maxAllowed) this.value = maxAllowed;
+            if (val < 0) this.value = 0;
+            updateFeePreview();
+        });
+
+        document.getElementById('maxPointsBtn').addEventListener('click', function() {
+            pointsInput.value = maxAllowed;
+            updateFeePreview();
+        });
+    }
 </script>
 </body>
 </html>

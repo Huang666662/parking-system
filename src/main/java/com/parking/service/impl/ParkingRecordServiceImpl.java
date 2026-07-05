@@ -6,6 +6,7 @@ import com.parking.mapper.OrdersMapper;
 import com.parking.mapper.UserMapper;
 import com.parking.mapper.ParkingSpaceMapper;
 import com.parking.mapper.VehicleProcedureMapper;
+import com.parking.mapper.PointsRecordMapper;
 import com.parking.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -54,6 +55,15 @@ public class ParkingRecordServiceImpl implements IParkingRecordService {
     @Autowired
     private IFinancialRecordService financialRecordService;
 
+    @Autowired
+    private ICouponService couponService;
+
+    @Autowired
+    private IUserCouponService userCouponService;
+
+    @Autowired
+    private PointsRecordMapper pointsRecordMapper;
+
     @Override
     public int addRecord(ParkingRecord record) {
         return parkingRecordMapper.insert(record);
@@ -85,7 +95,6 @@ public class ParkingRecordServiceImpl implements IParkingRecordService {
     @Override
     @Transactional
     public void enter(String plateNumber, Long userId, Long spaceId) {
-        // 使用存储过程 sp_vehicle_entry（自动分配车位、防重复入场）
         Map<String, Object> params = new HashMap<>();
         params.put("plateNumber", plateNumber);
         params.put("userId", userId);
@@ -96,16 +105,57 @@ public class ParkingRecordServiceImpl implements IParkingRecordService {
 
     @Override
     @Transactional
-    public void exit(Long recordId, String paymentMethod) {
+    public void exit(Long recordId, String paymentMethod, Integer usePoints, Long userCouponId) {
         ParkingRecord record = parkingRecordMapper.selectById(recordId);
         if (record == null || !"parking".equals(record.getStatus())) {
             throw new RuntimeException("记录不存在或已离场");
         }
 
-        // 优先使用存储过程 sp_calculate_fee 计算费用，失败则 Java 兜底
+        long minutes = java.time.Duration.between(record.getEnterTime(), LocalDateTime.now()).toMinutes();
+        Long userId = record.getUserId();
+        boolean hasDiscounts = (usePoints != null && usePoints > 0) || userCouponId != null;
+        boolean isPaid = paymentMethod != null && !paymentMethod.isEmpty();
+
+        // ========== 路径1：无优惠券/积分时，优先使用存储过程 sp_vehicle_exit ==========
+        if (!hasDiscounts && isPaid) {
+            try {
+                Map<String, Object> exitParams = new HashMap<>();
+                exitParams.put("recordId", recordId);
+                exitParams.put("paymentMethod", paymentMethod);
+                exitParams.put("orderNo", null);
+                exitParams.put("paymentNo", null);
+                exitParams.put("amount", null);
+                vehicleProcedureMapper.callVehicleExit(exitParams);
+
+                // 存储过程成功后，积分奖励
+                BigDecimal spAmount = (BigDecimal) exitParams.get("amount");
+                if (spAmount != null && userId != null) {
+                    User user = userService.getUser(userId);
+                    if (user != null) {
+                        int earnedPoints = spAmount.intValue();
+                        if (earnedPoints > 0) {
+                            user.setPoints((user.getPoints() != null ? user.getPoints() : 0) + earnedPoints);
+                            userService.updateUser(user);
+
+                            PointsRecord earnRecord = new PointsRecord();
+                            earnRecord.setUserId(user.getId());
+                            earnRecord.setPoints(earnedPoints);
+                            earnRecord.setType("收入");
+                            earnRecord.setDescription("停车消费奖励 +" + earnedPoints + "积分");
+                            pointsRecordMapper.insert(earnRecord);
+                        }
+                    }
+                }
+                return;
+            } catch (Exception ignored) {
+                // 存储过程失败，走 Java 兜底
+            }
+        }
+
+        // ========== 路径2：Java 完整计费（存储过程不可用 或 有优惠券/积分折扣） ==========
+
+        // 第1步：计算原始费用（优先 sp_calculate_fee）
         BigDecimal originalFee = null;
-        BigDecimal discountFee = null;
-        BigDecimal actualFee = null;
         try {
             Map<String, Object> feeParams = new HashMap<>();
             feeParams.put("recordId", recordId);
@@ -114,14 +164,10 @@ public class ParkingRecordServiceImpl implements IParkingRecordService {
             feeParams.put("actualFee", null);
             vehicleProcedureMapper.callCalculateFee(feeParams);
             originalFee = (BigDecimal) feeParams.get("originalFee");
-            discountFee = (BigDecimal) feeParams.get("discountFee");
         } catch (Exception ignored) {
-            // 存储过程不可用时跳过，后续由 Java 计算
         }
 
         if (originalFee == null) {
-            // Java 兜底计费
-            long minutes = java.time.Duration.between(record.getEnterTime(), LocalDateTime.now()).toMinutes();
             List<ChargeRule> rules = chargeRuleService.listActive();
             ChargeRule rule = (rules != null && !rules.isEmpty()) ? rules.get(0) : null;
 
@@ -135,36 +181,102 @@ public class ParkingRecordServiceImpl implements IParkingRecordService {
             if (capPrice != null && originalFee.compareTo(capPrice) > 0) {
                 originalFee = capPrice;
             }
-            originalFee = originalFee.setScale(2, RoundingMode.HALF_UP);
-            discountFee = BigDecimal.ZERO;
+        }
+        originalFee = originalFee.setScale(2, RoundingMode.HALF_UP);
+        if (originalFee.compareTo(BigDecimal.ZERO) < 0) {
+            originalFee = BigDecimal.ZERO;
         }
 
-        // 应用会员折扣
-        Long userId = record.getUserId();
+        BigDecimal currentFee = originalFee;
+        BigDecimal memberDiscountAmount = BigDecimal.ZERO;
+        BigDecimal couponDiscountAmount = BigDecimal.ZERO;
+        BigDecimal pointsDiscountAmount = BigDecimal.ZERO;
+        int actualUsePoints = 0;
+        Long actualCouponId = null;
+
+        // 加载用户信息
         User user = null;
+        MemberLevel level = null;
         if (userId != null) {
             user = userService.getUser(userId);
             if (user != null && user.getMemberLevelId() != null) {
-                MemberLevel level = memberLevelService.getLevel(user.getMemberLevelId());
-                if (level != null && level.getDiscountRate() != null) {
-                    BigDecimal rate = level.getDiscountRate();
-                    BigDecimal memberDiscount = originalFee.multiply(BigDecimal.ONE.subtract(rate)).setScale(2, RoundingMode.HALF_UP);
-                    discountFee = discountFee.add(memberDiscount);
+                level = memberLevelService.getLevel(user.getMemberLevelId());
+            }
+        }
+
+        // 第2步：会员等级折扣
+        if (level != null && level.getDiscountRate() != null
+                && level.getDiscountRate().compareTo(BigDecimal.ONE) < 0) {
+            BigDecimal afterMemberDiscount = originalFee.multiply(level.getDiscountRate())
+                    .setScale(2, RoundingMode.HALF_UP);
+            memberDiscountAmount = originalFee.subtract(afterMemberDiscount);
+            currentFee = afterMemberDiscount;
+        }
+
+        // 第3步：优惠券抵扣
+        if (userCouponId != null && currentFee.compareTo(BigDecimal.ZERO) > 0) {
+            UserCoupon userCoupon = userCouponService.getUserCoupon(userCouponId);
+            if (userCoupon != null
+                    && "unused".equals(userCoupon.getStatus())
+                    && userCoupon.getUserId().equals(userId)) {
+                Coupon coupon = couponService.getCoupon(userCoupon.getCouponId());
+                if (coupon != null && coupon.getStatus() != null && coupon.getStatus() == 1
+                        && (coupon.getEndTime() == null || coupon.getEndTime().isAfter(LocalDateTime.now()))) {
+                    BigDecimal minAmount = coupon.getMinAmount() != null ? coupon.getMinAmount() : BigDecimal.ZERO;
+                    if (currentFee.compareTo(minAmount) >= 0) {
+                        if ("amount".equals(coupon.getCouponType())) {
+                            BigDecimal discountValue = coupon.getDiscountValue() != null
+                                    ? coupon.getDiscountValue() : BigDecimal.ZERO;
+                            couponDiscountAmount = discountValue.min(currentFee);
+                            currentFee = currentFee.subtract(couponDiscountAmount);
+                        } else {
+                            BigDecimal discountRate = coupon.getDiscountValue() != null
+                                    ? coupon.getDiscountValue() : BigDecimal.ONE;
+                            BigDecimal afterCoupon = currentFee.multiply(discountRate)
+                                    .setScale(2, RoundingMode.HALF_UP);
+                            couponDiscountAmount = currentFee.subtract(afterCoupon);
+                            currentFee = afterCoupon;
+                        }
+                        actualCouponId = coupon.getId();
+                        userCouponService.markUsed(userCouponId);
+                    }
                 }
             }
         }
-        actualFee = originalFee.subtract(discountFee).max(BigDecimal.ZERO);
-        actualFee = actualFee.setScale(2, RoundingMode.HALF_UP);
+
+        // 第4步：积分抵扣
+        if (usePoints != null && usePoints > 0 && user != null && currentFee.compareTo(BigDecimal.ZERO) > 0) {
+            int userPoints = user.getPoints() != null ? user.getPoints() : 0;
+            actualUsePoints = Math.min(usePoints, userPoints);
+            if (actualUsePoints > 0) {
+                int exchangeRate = getConfigInt("points_exchange_rate", 100);
+                BigDecimal pointsToYuan = new BigDecimal(actualUsePoints)
+                        .divide(new BigDecimal(exchangeRate), 2, RoundingMode.HALF_UP);
+                pointsDiscountAmount = pointsToYuan.min(currentFee);
+                currentFee = currentFee.subtract(pointsDiscountAmount);
+
+                user.setPoints(userPoints - actualUsePoints);
+                userService.updateUser(user);
+
+                PointsRecord pointsRecord = new PointsRecord();
+                pointsRecord.setUserId(user.getId());
+                pointsRecord.setPoints(-actualUsePoints);
+                pointsRecord.setType("支出");
+                pointsRecord.setDescription("停车费抵扣 -" + actualUsePoints + "积分");
+                pointsRecordMapper.insert(pointsRecord);
+            }
+        }
+
+        // 第5步：最终金额
+        BigDecimal actualFee = currentFee.max(BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal totalDiscount = originalFee.subtract(actualFee).setScale(2, RoundingMode.HALF_UP);
 
         // 更新停车记录
-        long minutes = java.time.Duration.between(record.getEnterTime(), LocalDateTime.now()).toMinutes();
         record.setExitTime(LocalDateTime.now());
         record.setDurationMinutes((int) minutes);
-        record.setOriginalFee(originalFee.setScale(2, RoundingMode.HALF_UP));
-        record.setDiscountFee(discountFee);
+        record.setOriginalFee(originalFee);
+        record.setDiscountFee(totalDiscount);
         record.setActualFee(actualFee);
-
-        boolean isPaid = paymentMethod != null && !paymentMethod.isEmpty();
         record.setStatus("completed");
         record.setPaymentStatus(isPaid ? "paid" : "unpaid");
         parkingRecordMapper.update(record);
@@ -197,7 +309,8 @@ public class ParkingRecordServiceImpl implements IParkingRecordService {
             payment.setRecordId(record.getId());
             payment.setAmount(actualFee);
             payment.setPaymentMethod(paymentMethod);
-            payment.setDiscountPoints(0);
+            payment.setDiscountPoints(actualUsePoints);
+            payment.setCouponId(actualCouponId);
             payment.setStatus("success");
             paymentRecordService.addPayment(payment);
 
@@ -208,12 +321,20 @@ public class ParkingRecordServiceImpl implements IParkingRecordService {
             financial.setRecordType("income");
             financialRecordService.addFinancialRecord(financial);
 
-            // 积分奖励：每消费1元得1积分
+            // 积分奖励
             if (user != null) {
                 int earnedPoints = actualFee.intValue();
                 if (earnedPoints > 0) {
-                    user.setPoints((user.getPoints() != null ? user.getPoints() : 0) + earnedPoints);
-                    userService.updateUser(user);
+                    User freshUser = userService.getUser(user.getId());
+                    freshUser.setPoints((freshUser.getPoints() != null ? freshUser.getPoints() : 0) + earnedPoints);
+                    userService.updateUser(freshUser);
+
+                    PointsRecord earnRecord = new PointsRecord();
+                    earnRecord.setUserId(freshUser.getId());
+                    earnRecord.setPoints(earnedPoints);
+                    earnRecord.setType("收入");
+                    earnRecord.setDescription("停车消费奖励 +" + earnedPoints + "积分");
+                    pointsRecordMapper.insert(earnRecord);
                 }
             }
         }

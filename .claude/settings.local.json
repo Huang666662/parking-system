@@ -3,7 +3,10 @@
     "allow": [
       "Bash(mvn compile *)",
       "Bash(where mvn *)",
-      "Bash(./mvnw compile *)"
+      "Bash(./mvnw compile *)",
+      "Bash(where.exe mvn *)",
+      "Read(//c/Program Files/Apache/Maven/**)",
+      "Read(//c/Program Files \\(x86\\)/Apache/Maven/**)"
     ]
   }
 }
